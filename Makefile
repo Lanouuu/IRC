@@ -21,6 +21,8 @@ END				=	\033[0m
 SOURCES_PATH	=	./srcs/
 
 SOURCES_MAIN	= 	main.cpp \
+
+SOURCES_SERVER	=	Server.cpp \
 	
 # **************************************************************************** #
 #                                                                              #
@@ -31,6 +33,7 @@ SOURCES_MAIN	= 	main.cpp \
 OBJECTS_PATH	=	objs/
 
 OBJECTS			=	$(addprefix ${OBJECTS_PATH}, ${SOURCES_MAIN:.cpp=.o}) \
+					$(addprefix ${OBJECTS_PATH}, ${SOURCES_SERVER:.cpp=.o}) \
 
 # **************************************************************************** #
 #                                                                              #
@@ -38,9 +41,9 @@ OBJECTS			=	$(addprefix ${OBJECTS_PATH}, ${SOURCES_MAIN:.cpp=.o}) \
 #                                                                              #
 # **************************************************************************** #
 
-INC_PATH		=	./include/
+INC_PATH		=	./includes/
 
-INCLUDES		=	
+INCLUDES		=	${INC_PATH}Server.hpp \
 
 # **************************************************************************** #
 #                                                                              #

@@ -37,11 +37,6 @@ uint16_t    Server::getPort(void) const
 {
     return (this->_serverPort);
 }
-
-uint16_t    Server::getPort(void) const
-{
-    return (this->_serverPort);
-}
         
 /****************************************************************************/
 /*                           Members Functions                              */

@@ -6,6 +6,7 @@
 # define BLUE	"\033[0;36m"
 # define END	"\033[0m"
 
+
 # include <cstdlib>
 # include <iostream>
 # include <sstream>
@@ -17,7 +18,6 @@ class   Server
 {
     public:
 
-        
         Server(int ac, char **av);
         ~Server(void);
 

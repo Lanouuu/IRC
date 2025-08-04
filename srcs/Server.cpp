@@ -9,18 +9,23 @@ Server::Server(void)
     return ;
 }
 
-Server::Server(int ac, char **av)
+Server::Server(int ac, char **av, int epoll_fd) : _serverIP("127.0.0.1"), _serverSocket(-1)
 {
     checkArgs(ac);
     std::string port = av[1];
     std::string password = av[2];
     parsePort(port);
     parsePassWord(password);
+    fillStruct();
+    fillSocket();
+    launchServer(epoll_fd);
     return ;
 }
 
 Server::~Server(void)
 {
+    if (_serverSocket != -1)
+        close(_serverSocket);
     return ;
 }
 
@@ -32,11 +37,6 @@ Server::~Server(void)
 /****************************************************************************/
 /*                           Getters / Setters                              */
 /****************************************************************************/
-
-uint16_t    Server::getPort(void) const
-{
-    return (this->_serverPort);
-}
 
 uint16_t    Server::getPort(void) const
 {
@@ -112,4 +112,38 @@ void    Server::passwordErr(char c)
         << "\t- char \'-\'" << std::endl
         << "\t- char \'_\'" << std::endl;
     throw std::invalid_argument(buf.str());
+}
+
+void    Server::fillStruct(void)
+{
+    _serverStruct.sin_family = AF_INET;
+    _serverStruct.sin_port = htons(_serverPort);
+    if (inet_pton(AF_INET, _serverIP.c_str(), &_serverStruct.sin_addr) != 1)
+        throw std::runtime_error(RED "Error: inet_pton: " END + std::string(strerror(errno)));
+    return ;
+}
+
+void    Server::fillSocket(void)
+{
+    _serverSocket = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
+    if (_serverSocket == -1)
+        throw std::runtime_error(RED "Error: socket: " END + std::string(strerror(errno)));
+    int opt = 1;
+    if (setsockopt(_serverSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1)
+        throw std::runtime_error(RED "Error: setsockopt: " END + std::string(strerror(errno)));
+    return ;
+}
+
+void    Server::launchServer(int epoll_fd)
+{
+    if (bind(_serverSocket, (struct sockaddr *)&_serverStruct, sizeof(_serverStruct)) == -1)
+        throw std::runtime_error(RED "Error: bind: " END + std::string(strerror(errno)));
+    if (listen(_serverSocket, 4096) == -1)
+        throw std::runtime_error(RED "Error: listen: " END + std::string(strerror(errno)));
+    struct epoll_event  event;
+    event.events = EPOLLIN;
+    event.data.fd = _serverSocket;
+    if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, _serverSocket, &event) == -1)
+        throw std::runtime_error("Error: epoll_ctl: " + std::string(strerror(errno)));
+    return ;
 }

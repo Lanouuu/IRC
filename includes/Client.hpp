@@ -20,7 +20,7 @@ class   Client
     
     std::string _clientNickname; //unique in server
     
-    int    _clientFd;
+    int         _clientFd;
     std::string _clientRealname;
     std::string _clientHostAdrr;
     std::string _clientUsername;
@@ -41,7 +41,7 @@ class   Client
 
         std::string getClientNickname();
 
-        int getClientFd();
+        int         getClientFd();
         std::string getClientRealname();
         std::string getClientHostAddr();
         std::string getClientUsername();

@@ -16,28 +16,25 @@
 class   Client
 {
     private:
-    Client(void);
+        std::string _clientNickname; //unique in server
+        
+        int         _clientFd;
+        std::string _clientRealname;
+        std::string _clientHostAdrr;
+        std::string _clientUsername;
+        std::string _serverName;
+        
+        bool _isOperator; //Channel moderators are identified by the channel member prefix '@'
+        bool _canKick;
+        bool _canMode;
+        bool _canInvite;
+        bool _canTopic;
+        bool _canOperator;
+        bool _canLimit;
     
-    std::string _clientNickname; //unique in server
-    
-    int         _clientFd;
-    std::string _clientRealname;
-    std::string _clientHostAdrr;
-    std::string _clientUsername;
-    std::string _serverName;
-    
-    bool _isOperator; //Channel moderators are identified by the channel member prefix '@'
-    bool _canKick;
-    bool _canMode;
-    bool _canInvite;
-    bool _canTopic;
-    bool _canOperator;
-    bool _canLimit;
-
     public:
-
-        // Client(int ac, char **av);
-        ~Client(void);
+        Client();
+        ~Client();
 
         std::string getClientNickname();
 

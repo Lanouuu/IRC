@@ -27,6 +27,7 @@ class   Server
         ~Server(void);
 
         uint16_t    getPort(void) const;
+        std::string getServerPassword();
 
     private:
     

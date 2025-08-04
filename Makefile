@@ -23,6 +23,7 @@ SOURCES_PATH	=	./srcs/
 SOURCES_MAIN	= 	main.cpp \
 
 SOURCES_SERVER	=	Server.cpp \
+					Client.cpp \
 	
 # **************************************************************************** #
 #                                                                              #
@@ -44,6 +45,7 @@ OBJECTS			=	$(addprefix ${OBJECTS_PATH}, ${SOURCES_MAIN:.cpp=.o}) \
 INC_PATH		=	./includes/
 
 INCLUDES		=	${INC_PATH}Server.hpp \
+					${INC_PATH}Client.hpp \
 
 # **************************************************************************** #
 #                                                                              #

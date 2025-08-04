@@ -1,4 +1,38 @@
 # include "Server.hpp"
+# include "Client.hpp"
+# include <vector>
+
+int parseClient(std::string &data, Server ircserver) {
+    std::istringstream iss(data);
+    std::string line, password, nickName, realName, hostAddr, userName;
+
+    while (std::getline(iss, line)) {
+        if(line.find("PASS") != std::string::npos)
+        {
+            password = line.substr(5);
+            password.erase(password.size()-1);
+            if(password != ircserver.getServerPassword()){
+                std::cout << RED "Wrong server password : " END << "\'" << password << std::endl;
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+int parseReq(int socket_fd, char* buf_client, Server ircserver) {
+    (void)socket_fd;
+    std::string data(buf_client);
+    std::istringstream iss(data);
+    std::string line;
+
+    while (std::getline(iss, line)) {
+        if(line.find("CAP LS") != std::string::npos)
+            if(parseClient(data, ircserver) == 1)
+                return 1;
+    }
+    return 0;
+}
 
 int main(int ac, char **av)
 {
@@ -31,7 +65,15 @@ int main(int ac, char **av)
                     std::cout << "ici" << std::endl;
                     std::cout << buf << std::endl;
                     std::cout << buf_client << std::endl;
-                    (void)temp_fd;
+                    if(parseReq(socket_fd, buf_client, ircserver) == 1) {
+                        //send error
+                    }
+                    else
+                    {
+                        //addClient to server map_client
+                        (void)temp_fd;
+                    }
+
                 }
             }
         }

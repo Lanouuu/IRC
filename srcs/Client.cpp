@@ -1,6 +1,14 @@
 #include "Client.hpp"
 
-//Client(){} ??
+Client::Client(){
+    _isOperator=false; 
+    _canKick=false;
+    _canMode=false;
+    _canInvite=false;
+    _canTopic=false;
+    _canOperator=false;
+    _canLimit=false;
+}
 
 Client::~Client() {
 

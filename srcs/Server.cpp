@@ -42,7 +42,11 @@ uint16_t    Server::getPort(void) const
 {
     return (this->_serverPort);
 }
-        
+
+std::string Server::getServerPassword() {
+    return (this->_serverPassword);
+}
+
 /****************************************************************************/
 /*                           Members Functions                              */
 /****************************************************************************/

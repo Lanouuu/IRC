@@ -2,7 +2,18 @@
 # include "Client.hpp"
 # include <vector>
 
-int parseClient(std::string &data, Server ircserver) {
+int checkNicknameForm(std::string nickName) {
+    if(nickName.find(' ') != std::string::npos || nickName.find(',') != std::string::npos ||
+    nickName.find('*') != std::string::npos || nickName.find('?') != std::string::npos ||
+    nickName.find('!') != std::string::npos || nickName.find('@') != std::string::npos || 
+    nickName.find('.') != std::string::npos || nickName[0] == '$' || nickName[0] == ':' || 
+    nickName[0] == '#' || nickName[0] == '&' || nickName[0] == '~' || nickName[0] == ':' ||
+    nickName[0] == '%' || nickName[0] == '+')
+        return 1;
+    return 0;
+}
+
+int parseClient(std::string &data, int temp_fd, Server ircserver) {
     std::istringstream iss(data);
     std::string line, password, nickName, realName, hostAddr, userName;
 
@@ -16,11 +27,23 @@ int parseClient(std::string &data, Server ircserver) {
                 return 1;
             }
         }
+        if(line.find("NICK") != std::string::npos)
+        {
+            std::cout << "Dans NICK" << std::endl;
+            nickName = line.substr(5);
+            nickName.erase(password.size()-1);
+            if(checkNicknameForm(nickName) == 1)
+            {
+                std::cout << RED << temp_fd << nickName << " :Erroneus nickname" END << std::endl; //err 432
+                return 1;
+            }
+            
+        }
     }
     return 0;
 }
 
-int parseReq(int socket_fd, char* buf_client, Server ircserver) {
+int parseReq(int socket_fd, char* buf_client, int temp_fd, Server ircserver) {
     (void)socket_fd;
     std::string data(buf_client);
     std::istringstream iss(data);
@@ -28,7 +51,7 @@ int parseReq(int socket_fd, char* buf_client, Server ircserver) {
 
     while (std::getline(iss, line)) {
         if(line.find("CAP LS") != std::string::npos)
-            if(parseClient(data, ircserver) == 1)
+            if(parseClient(data, temp_fd, ircserver) == 1)
                 return 1;
     }
     return 0;
@@ -65,7 +88,7 @@ int main(int ac, char **av)
                     std::cout << "ici" << std::endl;
                     std::cout << buf << std::endl;
                     std::cout << buf_client << std::endl;
-                    if(parseReq(socket_fd, buf_client, ircserver) == 1) {
+                    if(parseReq(socket_fd, buf_client, temp_fd, ircserver) == 1) {
                         //send error
                     }
                     else

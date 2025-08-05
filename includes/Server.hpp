@@ -17,6 +17,7 @@
 # include <arpa/inet.h>
 # include <sys/epoll.h>
 # include <errno.h>
+# include <map>
 
 class   Server
 {
@@ -38,6 +39,7 @@ class   Server
         std::string _serverPassword;
         sockaddr_in _serverStruct;
         int         _serverSocket;
+        std::map<int, std::string> _clientsDB;
 
         void        checkArgs(int ac);
         void        parsePort(std::string & port);

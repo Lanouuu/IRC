@@ -8,16 +8,19 @@
 
 # define MAX_EVENTS 1024
 
-# include <cstdlib>
 # include <cstring>
 # include <iostream>
 # include <sstream>
 # include <exception>
 # include <unistd.h>
-# include <arpa/inet.h>
 # include <sys/epoll.h>
-# include <errno.h>
 # include <map>
+# include <utility>
+# include "Client.hpp"
+
+class Client;
+
+typedef std::map<int, Client> client_map;
 
 class   Server
 {
@@ -28,7 +31,12 @@ class   Server
         ~Server(void);
 
         uint16_t    getPort(void) const;
-        std::string getServerPassword();
+        std::string getServerPassword(void);
+        int         getSocket(void) const;
+        client_map  &getClientsDB(void);
+        const client_map    &getClientsDB(void) const;
+
+        void        addClient(int socket_fd);
 
     private:
     
@@ -39,7 +47,7 @@ class   Server
         std::string _serverPassword;
         sockaddr_in _serverStruct;
         int         _serverSocket;
-        std::map<int, std::string> _clientsDB;
+        client_map  _clientsDB;
 
         void        checkArgs(int ac);
         void        parsePort(std::string & port);

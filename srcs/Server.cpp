@@ -47,6 +47,21 @@ std::string Server::getServerPassword() {
     return (this->_serverPassword);
 }
 
+int Server::getSocket(void) const
+{
+    return (this->_serverSocket);
+}
+
+client_map  &Server::getClientsDB(void)
+{
+    return (this->_clientsDB);
+}
+
+const client_map    &Server::getClientsDB(void) const
+{
+    return (this->_clientsDB);
+}
+
 /****************************************************************************/
 /*                           Members Functions                              */
 /****************************************************************************/
@@ -149,5 +164,18 @@ void    Server::launchServer(int epoll_fd)
     event.data.fd = _serverSocket;
     if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, _serverSocket, &event) == -1)
         throw std::runtime_error("Error: epoll_ctl: " + std::string(strerror(errno)));
+    return ;
+}
+
+void    Server::addClient(int socket_fd)
+{
+    Client client_temp;
+    int client_fd = accept(socket_fd, NULL, NULL);
+    client_temp.setSocket(client_fd);
+    char buf_client[1024];
+    recv(client_fd, buf_client, 1024, 0);
+    std::string data(buf_client);
+    client_temp.parseClient(data, client_fd, *this);
+    _clientsDB.insert(std::make_pair(client_fd, client_temp));
     return ;
 }

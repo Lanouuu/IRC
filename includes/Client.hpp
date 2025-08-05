@@ -7,48 +7,51 @@
 # define END	"\033[0m"
 
 # include <cstdlib>
-# include <iostream>
-# include <sstream>
-# include <exception>
 # include <arpa/inet.h>
 # include <errno.h>
+# include "Server.hpp"
+
+class Server;
 
 class   Client
 {
     private:
+
         std::string _clientNickname; //unique in server
-        
-        int         _clientFd;
+        int         _clientSocket;
         std::string _clientRealname;
-        std::string _clientHostAdrr;
         std::string _clientUsername;
-        std::string _serverName;
         
-        bool _isOperator; //Channel moderators are identified by the channel member prefix '@'
-        bool _canKick;
-        bool _canMode;
-        bool _canInvite;
-        bool _canTopic;
-        bool _canOperator;
-        bool _canLimit;
+        bool        _isOperator; //Channel moderators are identified by the channel member prefix '@'
+        bool        _canKick;
+        bool        _canMode;
+        bool        _canInvite;
+        bool        _canTopic;
+        bool        _canOperator;
+        bool        _canLimit;
+
+        int checkNicknameExist(std::string nickName, Server &ircserver);
+        int checkNicknameForm(std::string nickName);
     
     public:
+
         Client();
         ~Client();
 
-        std::string getClientNickname();
+        std::string getClientNickname() const;
 
-        int         getClientFd();
+        int         getSocket();
         std::string getClientRealname();
-        std::string getClientHostAddr();
         std::string getClientUsername();
-        std::string getClientServerName();
 
+        void        setSocket(int socket);
         // void setInviteOnly(); // MODE i
         // void setTopic();      // MODE t
         // void setPassword();   // MODE k
         // void setOperator();   // MODE o
         // void setLimit();      // MODE l
+
+        int parseClient(std::string &data, int client_fd, Server &ircserver);
 };
 
 #endif

@@ -24,6 +24,8 @@ SOURCES_MAIN	= 	main.cpp \
 
 SOURCES_SERVER	=	Server.cpp \
 					Client.cpp \
+
+SOURCES_CHANNEL	=	Channel.cpp \
 	
 # **************************************************************************** #
 #                                                                              #
@@ -35,6 +37,7 @@ OBJECTS_PATH	=	objs/
 
 OBJECTS			=	$(addprefix ${OBJECTS_PATH}, ${SOURCES_MAIN:.cpp=.o}) \
 					$(addprefix ${OBJECTS_PATH}, ${SOURCES_SERVER:.cpp=.o}) \
+					$(addprefix ${OBJECTS_PATH}, ${SOURCES_CHANNEL:.cpp=.o}) \
 
 # **************************************************************************** #
 #                                                                              #
@@ -46,6 +49,7 @@ INC_PATH		=	./includes/
 
 INCLUDES		=	${INC_PATH}Server.hpp \
 					${INC_PATH}Client.hpp \
+					${INC_PATH}Channel.hpp \
 
 # **************************************************************************** #
 #                                                                              #

@@ -20,9 +20,9 @@ class   Client
         
         int         _clientFd;
         std::string _clientRealname;
-        std::string _clientHostAdrr;
+        // std::string _clientHostAdrr;
         std::string _clientUsername;
-        std::string _serverName;
+        // std::string _serverName;
         
         bool _isOperator; //Channel moderators are identified by the channel member prefix '@'
         bool _canKick;
@@ -34,15 +34,16 @@ class   Client
     
     public:
         Client();
+        Client(const std::string &nickname);
         ~Client();
 
-        std::string getClientNickname();
+        std::string getClientNickname() const;
 
-        int         getClientFd();
-        std::string getClientRealname();
-        std::string getClientHostAddr();
-        std::string getClientUsername();
-        std::string getClientServerName();
+        int         getClientFd() const;
+        std::string getClientRealname() const;
+        // std::string getClientHostAddr() const;
+        std::string getClientUsername() const;
+        // std::string getClientServerName() const;
 
         // void setInviteOnly(); // MODE i
         // void setTopic();      // MODE t

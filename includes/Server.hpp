@@ -18,28 +18,29 @@
 # include <sys/epoll.h>
 # include <errno.h>
 # include <map>
+# include "Client.hpp"
 
 class   Server
 {
     public:
-
-        
         Server(int ac, char **av, int epoll_fd);
         ~Server(void);
 
         uint16_t    getPort(void) const;
         std::string getServerPassword();
-
+        std::map<int, Client> & getClientsDB();
+        const std::map<int, Client> & getClientsDB() const;
+        
     private:
-    
+        
         Server(void);
-
+        
         std::string _serverIP;
         uint16_t    _serverPort;
         std::string _serverPassword;
         sockaddr_in _serverStruct;
         int         _serverSocket;
-        std::map<int, std::string> _clientsDB;
+        std::map<int, Client> _clientsDB;
 
         void        checkArgs(int ac);
         void        parsePort(std::string & port);

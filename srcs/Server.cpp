@@ -47,6 +47,14 @@ std::string Server::getServerPassword() {
     return (this->_serverPassword);
 }
 
+const std::map<int, Client>& Server::getClientsDB() const {
+    return (this->_clientsDB);
+}
+
+std::map<int, Client>& Server::getClientsDB() {
+    return (this->_clientsDB);
+}
+
 /****************************************************************************/
 /*                           Members Functions                              */
 /****************************************************************************/

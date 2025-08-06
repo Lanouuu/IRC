@@ -20,7 +20,7 @@ std::string RPL_CREATED(const std::string & server, const std::string & nick, co
 
 std::string RPL_MYINFO(const std::string & server, const std::string & nick, const std::string & version)
 {
-    std::string buf = ":" + server + " 004 " + nick + " " + server + " " + version + " - " + " -" + "\r\n";
+    std::string buf = ":" + server + " 004 " + nick + " " + server + " " + version + " o " + "o" + "\r\n";
     return (buf);
 }
 

@@ -73,6 +73,10 @@ void    Client::setSocket(int socket)
     return ;
 }
 
+void Client::setClientNickname(std::string nick) {
+    _clientNickname = nick;
+}
+
 void    Client::setServName(std::string & name)
 {
     this->_serverName = name;
@@ -89,6 +93,7 @@ void    Client::setNetwork(std::string & network)
 /*                           Members Functions                              */
 /****************************************************************************/
 
+//return 1 if exist
 int Client::checkNicknameExist(std::string nickName, Server &ircserver) {
     for(std::map<int, Client>::const_iterator it = ircserver.getClientsDB().begin(); it != ircserver.getClientsDB().end(); it++)
     {
@@ -118,7 +123,7 @@ int Client::parseClient(std::string &data, int client_fd, Server &ircserver) {
     while (std::getline(iss, line)) {
         if (!line.empty() && line[line.size() - 1] == '\r')
             line.erase(line.size() - 1);
-        if(line.find("PASS") != std::string::npos)
+        if(line.rfind("PASS ", 0) == 0)
         {
             password = line.substr(5);
             if(password != ircserver.getServerPassword()) {
@@ -126,7 +131,7 @@ int Client::parseClient(std::string &data, int client_fd, Server &ircserver) {
                 return 1;
             }
         }
-        if(line.find("NICK") != std::string::npos)
+        if(line.rfind("NICK ", 0) == 0)
         {
             nickName = line.substr(5);
             if(nickName.empty() || nickName[0] == '\0') { //j'arrive pas tester avec telnet a voir plus tard
@@ -143,9 +148,8 @@ int Client::parseClient(std::string &data, int client_fd, Server &ircserver) {
             }
             _clientNickname = nickName;
         }
-        if(line.find("USER") != std::string::npos)
+        if(line.rfind("USER ", 0) == 0)
         {
-            // commande : USER <username> 0 * <:realname>
             int count = 0;
             size_t pos2 = line.find_last_of(':');
             for(size_t i = 0; i < pos2; i++) {

@@ -1,20 +1,7 @@
 # include "Server.hpp"
 # include "Client.hpp"
+# include "Utils.hpp"
 # include <vector>
-
-// int parseReq(int socket_fd, char* buf_client, int temp_fd, Server ircserver) {
-//     (void)socket_fd;
-//     std::string data(buf_client);
-//     std::istringstream iss(data);
-//     std::string line;
-
-//     while (std::getline(iss, line)) {
-//         if(line.find("CAP LS") != std::string::npos)
-//             if(parseClient(data, temp_fd, ircserver) == 1)
-//                 return 1;
-//     }
-//     return 0;
-// }
 
 int main(int ac, char **av)
 {

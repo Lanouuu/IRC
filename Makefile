@@ -24,6 +24,7 @@ SOURCES_MAIN	= 	main.cpp \
 
 SOURCES_SERVER	=	Server.cpp \
 					Client.cpp \
+					Utils.cpp \
 					numerics.cpp \
 	
 # **************************************************************************** #
@@ -47,6 +48,7 @@ INC_PATH		=	./includes/
 
 INCLUDES		=	${INC_PATH}Server.hpp \
 					${INC_PATH}Client.hpp \
+					${INC_PATH}Utils.hpp \
 					${INC_PATH}numerics.hpp \
 
 # **************************************************************************** #

@@ -16,8 +16,9 @@
 # include <sys/epoll.h>
 # include <map>
 # include <utility>
-# include <numerics.hpp>
+# include "numerics.hpp"
 # include "Client.hpp"
+#include "Utils.hpp"
 
 class Client;
 
@@ -64,6 +65,8 @@ class   Server
         void                fillSocket(void);
         void                launchServer(int epoll_fd);
         void                connectionReply(int client_fd, const std::string & nick);
+        int                 receiveReq(int socket_fd, Server ircserver);
+        int                 parseReq(int socket_fd, char *buf, Server ircserver);
 
 };
   

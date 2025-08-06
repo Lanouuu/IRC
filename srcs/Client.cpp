@@ -56,7 +56,7 @@ std::string Client::getClientNickname() const {
     return _clientNickname;
 }
 
-int Client::getSocket() {
+int const & Client::getSocket() const {
     return _clientSocket;
 }
 

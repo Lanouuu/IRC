@@ -44,7 +44,7 @@ class   Client
 
         
         std::string             getClientNickname() const;
-        int                     getSocket();
+        int const &             getSocket() const;
         std::string             getClientRealname();
         std::string             getClientUsername();
         struct epoll_event &    getClientEpollStruct();

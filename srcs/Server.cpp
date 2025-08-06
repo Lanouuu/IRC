@@ -203,7 +203,7 @@ void    Server::serverListen(int epoll_fd)
                 if (socket_fd == _serverSocket)
                 {
                     std::cout << "create client" << std::endl;
-                    addClient(socket_fd);
+                    addClient(socket_fd, epoll_fd);
                 }
                 else
                 {
@@ -232,19 +232,30 @@ void    Server::connectionReply(int client_fd, const std::string & nick)
     return ;
 }
 
-void    Server::addClient(int socket_fd)
+void    Server::setClient(Client & client, int const & socket_fd, int const & epoll_fd)
+{
+        int clientSocket = accept(socket_fd, NULL, NULL);
+        client.setSocket(clientSocket);
+        client.getClientEpollStruct().events = EPOLLIN;
+        client.getClientEpollStruct().data.fd = clientSocket;
+        if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, clientSocket, &client.getClientEpollStruct()) == -1)
+            std::cerr << RED << "Error: epoll_ctl: " << strerror(errno) << END << std::endl;
+        return ;
+}
+
+void    Server::addClient(int socket_fd, int epoll_fd)
 {
     Client client_temp;
-    int client_fd = accept(socket_fd, NULL, NULL);
-    client_temp.setSocket(client_fd);
+    
+    setClient(client_temp, socket_fd, epoll_fd);
     client_temp.setServName(_serverName);
     client_temp.setNetwork(_serverNetwork);
     char buf_client[1024];
-    recv(client_fd, buf_client, 1024, 0);
+    recv(client_temp.getSocket(), buf_client, 1024, 0);
     std::string data(buf_client);
-    client_temp.parseClient(data, client_fd, *this);
-    connectionReply(client_fd, client_temp.getClientNickname());
-    _clientsDB.insert(std::make_pair(client_fd, client_temp));
+    client_temp.parseClient(data, client_temp.getSocket(), *this);
+    connectionReply(client_temp.getSocket(), client_temp.getClientNickname());
+    _clientsDB.insert(std::make_pair(client_temp.getSocket(), client_temp));
     return ;
 }
 

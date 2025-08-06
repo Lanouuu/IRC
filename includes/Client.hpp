@@ -17,20 +17,21 @@ class   Client
 {
     private:
 
-        std::string _clientNickname; //unique in server
-        int         _clientSocket;
-        std::string _clientRealname;
-        std::string _clientUsername;
-        std::string _serverName;
-        std::string _serverNetwork;
-        
-        bool        _isOperator; //Channel moderators are identified by the channel member prefix '@'
-        bool        _canKick;
-        bool        _canMode;
-        bool        _canInvite;
-        bool        _canTopic;
-        bool        _canOperator;
-        bool        _canLimit;
+        std::string             _clientNickname; //unique in server
+        int                     _clientSocket;
+        std::string             _clientRealname;
+        std::string             _clientUsername;
+        std::string             _serverName;
+        std::string             _serverNetwork;
+        struct epoll_event      _clientEvent;
+
+        bool                    _isOperator; //Channel moderators are identified by the channel member prefix '@'
+        bool                    _canKick;
+        bool                    _canMode;
+        bool                    _canInvite;
+        bool                    _canTopic;
+        bool                    _canOperator;
+        bool                    _canLimit;
 
         
         public:
@@ -38,28 +39,29 @@ class   Client
         Client();
         Client(const Client & src);
         ~Client();
-        int checkNicknameExist(std::string nickName, Server &ircserver);
-        int checkNicknameForm(std::string nickName);
 
-        Client &    operator=(const Client & rhs);
+        Client &                operator=(const Client & rhs);
 
-        std::string getClientNickname() const;
-
-        int         getSocket();
-        std::string getClientRealname();
-        std::string getClientUsername();
-
-        void        setSocket(int socket);
-        void        setClientNickname(std::string nick);
-        void        setServName(std::string & name);
-        void        setNetwork(std::string & network);
+        
+        std::string             getClientNickname() const;
+        int                     getSocket();
+        std::string             getClientRealname();
+        std::string             getClientUsername();
+        struct epoll_event &    getClientEpollStruct();
+        void                    setSocket(int socket);
+        void                    setClientNickname(std::string nick);
+        void                    setServName(std::string & name);
+        void                    setNetwork(std::string & network);
+        
+        int                     checkNicknameForm(std::string nickName);
+        int                     checkNicknameExist(std::string nickName, Server &ircserver);
         // void setInviteOnly(); // MODE i
         // void setTopic();      // MODE t
         // void setPassword();   // MODE k
         // void setOperator();   // MODE o
         // void setLimit();      // MODE l
 
-        int         parseClient(std::string &data, int client_fd, Server &ircserver);
+        int                     parseClient(std::string &data, int client_fd, Server &ircserver);
 };
 
 #endif

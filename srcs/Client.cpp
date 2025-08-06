@@ -44,6 +44,7 @@ Client &    Client::operator=(const Client & rhs)
     this->_canTopic = rhs._canTopic;
     this->_canOperator = rhs._canOperator;
     this->_canLimit = rhs._canLimit;
+    this->_clientEvent = rhs._clientEvent;
     return (*this);
 }
 
@@ -65,6 +66,11 @@ std::string Client::getClientRealname() {
 
 std::string Client::getClientUsername() {
     return _clientUsername;
+}
+
+struct epoll_event & Client::getClientEpollStruct()
+{
+    return _clientEvent;
 }
 
 void    Client::setSocket(int socket)

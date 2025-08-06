@@ -39,7 +39,7 @@ class   Server
         const client_map &  getClientsDB(void) const;
 
         void                serverListen(int epoll_fd);
-        void                addClient(int socket_fd);
+        void                addClient(int socket_fd, int epoll_fd);
 
     private:
     
@@ -64,6 +64,7 @@ class   Server
         void                fillStruct(void);
         void                fillSocket(void);
         void                launchServer(int epoll_fd);
+        void                setClient(Client & client, int const & socket_fd, int const & epoll_fd);
         void                connectionReply(int client_fd, const std::string & nick);
         int                 receiveReq(int socket_fd, Server ircserver);
         int                 parseReq(int socket_fd, char *buf, Server ircserver);

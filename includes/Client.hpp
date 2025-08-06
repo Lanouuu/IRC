@@ -30,13 +30,13 @@ class   Client
         bool        _canOperator;
         bool        _canLimit;
 
-        int checkNicknameExist(std::string nickName, Server &ircserver);
-        int checkNicknameForm(std::string nickName);
-    
-    public:
-
+        
+        public:
+        
         Client();
         ~Client();
+        int checkNicknameExist(std::string nickName, Server &ircserver);
+        int checkNicknameForm(std::string nickName);
 
         std::string getClientNickname() const;
 
@@ -45,6 +45,7 @@ class   Client
         std::string getClientUsername();
 
         void        setSocket(int socket);
+        void        setClientNickname(std::string nick);
         // void setInviteOnly(); // MODE i
         // void setTopic();      // MODE t
         // void setPassword();   // MODE k

@@ -9,13 +9,19 @@ Server::Server(void)
     return ;
 }
 
-Server::Server(int ac, char **av, int epoll_fd) : _serverIP("127.0.0.1"), _serverSocket(-1)
+Server::Server(int ac, char **av, int epoll_fd) 
+    : _serverIP("127.0.0.1"), 
+    _serverSocket(-1), 
+    _serverName("irc.42.fr"), 
+    _serverNetwork("42IRC"), 
+    _serverVersion("1.0")
 {
     checkArgs(ac);
     std::string port = av[1];
     std::string password = av[2];
     parsePort(port);
     parsePassWord(password);
+    getCreationDate();
     fillStruct();
     fillSocket();
     launchServer(epoll_fd);
@@ -133,6 +139,18 @@ void    Server::passwordErr(char c)
     throw std::invalid_argument(buf.str());
 }
 
+void    Server::getCreationDate(void) 
+{
+    std::time_t now = std::time(NULL);
+    std::tm *gmt = std::gmtime(&now);
+
+    char buffer[100];
+    std::strftime(buffer, sizeof(buffer), "%a %b %d %Y at %H:%M:%S UTC", gmt);
+
+    _serverDate = buffer;
+    return ;
+}
+
 void    Server::fillStruct(void)
 {
     _serverStruct.sin_family = AF_INET;
@@ -167,15 +185,58 @@ void    Server::launchServer(int epoll_fd)
     return ;
 }
 
+void    Server::serverListen(int epoll_fd)
+{
+    int                 n_event;
+    struct epoll_event  events[MAX_EVENTS]; // tableau d'event
+    while (1)
+    {
+        if((n_event = epoll_wait(epoll_fd, events, MAX_EVENTS, -1)) == -1)
+            throw std::runtime_error( RED "Error: epoll_wait: " END + std::string(strerror(errno)));
+        std::cout << "Event catch" << std::endl;
+        for (int i = 0; i < n_event; i++) 
+        {
+            int socket_fd = events[i].data.fd; // -> correspond a la socket du server;
+            if (events[i].events & EPOLLIN) 
+            {
+                if (socket_fd == _serverSocket)
+                    addClient(socket_fd);
+                // else
+                // {
+                //     if(parseReq(socket_fd, buf_client, temp_fd, ircserver) == 1)
+                //     //send error
+                // }
+            }
+        }
+    }
+    return ;
+}
+
+void    Server::connectionReply(int client_fd, const std::string & nick)
+{
+    std::string welcome = RPL_WELCOME(_serverName, nick, _serverNetwork);
+    std::string yourhost = RPL_YOURHOST(_serverName, nick, _serverVersion);
+    std::string created = RPL_CREATED(_serverName, nick, _serverDate);
+    std::string my_info = RPL_MYINFO(_serverName, nick, _serverVersion);
+    std::string isupport = RPL_ISUPPORT(_serverName, nick);
+    std::string buf = welcome + yourhost + created + my_info + isupport;
+
+    send(client_fd, buf.c_str(), buf.size(), 0);
+    return ;
+}
+
 void    Server::addClient(int socket_fd)
 {
     Client client_temp;
     int client_fd = accept(socket_fd, NULL, NULL);
     client_temp.setSocket(client_fd);
+    client_temp.setServName(_serverName);
+    client_temp.setNetwork(_serverNetwork);
     char buf_client[1024];
     recv(client_fd, buf_client, 1024, 0);
     std::string data(buf_client);
     client_temp.parseClient(data, client_fd, *this);
+    connectionReply(client_fd, client_temp.getClientNickname());
     _clientsDB.insert(std::make_pair(client_fd, client_temp));
     return ;
 }

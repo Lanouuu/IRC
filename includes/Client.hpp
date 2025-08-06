@@ -21,6 +21,8 @@ class   Client
         int         _clientSocket;
         std::string _clientRealname;
         std::string _clientUsername;
+        std::string _serverName;
+        std::string _serverNetwork;
         
         bool        _isOperator; //Channel moderators are identified by the channel member prefix '@'
         bool        _canKick;
@@ -30,13 +32,16 @@ class   Client
         bool        _canOperator;
         bool        _canLimit;
 
-        int checkNicknameExist(std::string nickName, Server &ircserver);
-        int checkNicknameForm(std::string nickName);
+        int         checkNicknameExist(std::string nickName, Server &ircserver);
+        int         checkNicknameForm(std::string nickName);
     
     public:
 
         Client();
+        Client(const Client & src);
         ~Client();
+
+        Client &    operator=(const Client & rhs);
 
         std::string getClientNickname() const;
 
@@ -45,13 +50,15 @@ class   Client
         std::string getClientUsername();
 
         void        setSocket(int socket);
+        void        setServName(std::string & name);
+        void        setNetwork(std::string & network);
         // void setInviteOnly(); // MODE i
         // void setTopic();      // MODE t
         // void setPassword();   // MODE k
         // void setOperator();   // MODE o
         // void setLimit();      // MODE l
 
-        int parseClient(std::string &data, int client_fd, Server &ircserver);
+        int         parseClient(std::string &data, int client_fd, Server &ircserver);
 };
 
 #endif

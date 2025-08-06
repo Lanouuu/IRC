@@ -8,14 +8,15 @@
 
 # define MAX_EVENTS 1024
 
+#include <ctime>
 # include <cstring>
-# include <iostream>
 # include <sstream>
 # include <exception>
 # include <unistd.h>
 # include <sys/epoll.h>
 # include <map>
 # include <utility>
+# include <numerics.hpp>
 # include "Client.hpp"
 
 class Client;
@@ -30,32 +31,39 @@ class   Server
         Server(int ac, char **av, int epoll_fd);
         ~Server(void);
 
-        uint16_t    getPort(void) const;
-        std::string getServerPassword(void);
-        int         getSocket(void) const;
-        client_map  &getClientsDB(void);
-        const client_map    &getClientsDB(void) const;
+        uint16_t            getPort(void) const;
+        std::string         getServerPassword(void);
+        int                 getSocket(void) const;
+        client_map &        getClientsDB(void);
+        const client_map &  getClientsDB(void) const;
 
-        void        addClient(int socket_fd);
+        void                serverListen(int epoll_fd);
+        void                addClient(int socket_fd);
 
     private:
     
         Server(void);
 
-        std::string _serverIP;
-        uint16_t    _serverPort;
-        std::string _serverPassword;
-        sockaddr_in _serverStruct;
-        int         _serverSocket;
-        client_map  _clientsDB;
+        std::string         _serverIP;
+        uint16_t            _serverPort;
+        std::string         _serverPassword;
+        sockaddr_in         _serverStruct;
+        int                 _serverSocket;
+        client_map          _clientsDB;
+        std::string         _serverName;
+        std::string         _serverNetwork;
+        std::string         _serverVersion;
+        std::string         _serverDate;
 
-        void        checkArgs(int ac);
-        void        parsePort(std::string & port);
-        void        parsePassWord(std::string & password);
-        void        passwordErr(char c);
-        void        fillStruct(void);
-        void        fillSocket(void);
-        void        launchServer(int epoll_fd);
+        void                checkArgs(int ac);
+        void                parsePort(std::string & port);
+        void                parsePassWord(std::string & password);
+        void                passwordErr(char c);
+        void                getCreationDate(void);
+        void                fillStruct(void);
+        void                fillSocket(void);
+        void                launchServer(int epoll_fd);
+        void                connectionReply(int client_fd, const std::string & nick);
 
 };
   

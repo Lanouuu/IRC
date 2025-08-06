@@ -15,6 +15,12 @@ Client::Client() : _clientSocket(-1)
     _canLimit=false;
 }
 
+Client::Client(const Client & src)
+{
+    *this = src;
+    return ;
+}
+
 Client::~Client() 
 {
 }
@@ -22,6 +28,24 @@ Client::~Client()
 /****************************************************************************/
 /*                               Operators                                  */
 /****************************************************************************/
+
+Client &    Client::operator=(const Client & rhs)
+{
+    this->_clientNickname = rhs._clientNickname;
+    this->_clientSocket = rhs._clientSocket;
+    this->_clientRealname = rhs._clientRealname;
+    this->_clientUsername = rhs._clientUsername;
+    this->_serverName = rhs._serverName;
+    this->_serverNetwork = rhs._serverNetwork;
+    this->_isOperator = rhs._isOperator;
+    this->_canKick = rhs._canKick;
+    this->_canMode = rhs._canMode;
+    this->_canInvite = rhs._canInvite;
+    this->_canTopic = rhs._canTopic;
+    this->_canOperator = rhs._canOperator;
+    this->_canLimit = rhs._canLimit;
+    return (*this);
+}
 
 /****************************************************************************/
 /*                           Getters / Setters                              */
@@ -46,6 +70,18 @@ std::string Client::getClientUsername() {
 void    Client::setSocket(int socket)
 {
     this->_clientSocket = socket;
+    return ;
+}
+
+void    Client::setServName(std::string & name)
+{
+    this->_serverName = name;
+    return ;
+}
+
+void    Client::setNetwork(std::string & network)
+{
+    this->_serverNetwork = network;
     return ;
 }
 

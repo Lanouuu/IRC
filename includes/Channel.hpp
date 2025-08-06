@@ -10,23 +10,23 @@ class Client;
 class   Channel
 {
     public:
-        Channel();
-        Channel(std::string const i, std::string const t, std::string const k, std::string const l);
-        ~Channel();
+        // Channel();
+        // Channel(std::string const i, std::string const t, std::string const k, std::string const l);
+        // ~Channel();
 
-        void    broadcast() const;
+        // void    broadcast() const;
         
     private:
-        std::map<std::string, Client>   _members;
-        std::vector<std::string>        _operators;
-        std::string                     _password;
-        std::string                     _topic;
-        size_t                          _limit;
+        // std::map<std::string, Client>   _members;
+        // std::vector<std::string>        _operators;
+        // std::string                     _password;
+        // std::string                     _topic;
+        // size_t                          _limit;
         
-        bool                            _InviteOnlyIsSet;
-        bool                            _topicRestrictionIsSet;
-        bool                            _passwordIsSet;
-        bool                            _limitIsSet;
+        // bool                            _InviteOnlyIsSet;
+        // bool                            _topicRestrictionIsSet;
+        // bool                            _passwordIsSet;
+        // bool                            _limitIsSet;
 };
 
 #endif

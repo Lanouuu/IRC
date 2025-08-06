@@ -67,7 +67,7 @@ class   Server
         void                setClient(Client & client, int const & socket_fd, int const & epoll_fd);
         void                connectionReply(int client_fd, const std::string & nick);
         int                 receiveReq(int socket_fd, Server ircserver);
-        int                 parseReq(int socket_fd, char *buf, Server ircserver);
+        int                 parseReq(int socket_fd, char *buf, Server & ircserver);
 
 };
   

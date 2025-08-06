@@ -210,7 +210,7 @@ void    Server::serverListen(int epoll_fd)
                     std::cout << "req received" << std::endl;
                     if(receiveReq(socket_fd, *this) == 1)
                     {
-                        std::cout << "error req" << std::endl; 
+                        std::cout << "error in req" << std::endl; 
                     }
                 }
             }
@@ -259,90 +259,142 @@ void    Server::addClient(int socket_fd, int epoll_fd)
     return ;
 }
 
-int Server::parseReq(int socket_fd, char *buf, Server ircserver) {
+int Server::parseReq(int socket_fd, char *buf, Server & ircserver) {
     std::string data(buf);
-    std::string message;
+    std::string response;
     Client client;
 
     if (!data.empty() && data[data.size() - 1] == '\r')
         data.erase(data.size() - 1);
-    if (data.rfind("PASS ", 0) == 0) {
+
+    if (data.rfind("PASS", 0) == 0) {
         if(countSpaces(data) != 1) {
-            std::cout << socket_fd << "<command> :Not enough parameters" << std::endl; //err 461
+            response = convertIntToStr(socket_fd) + " PASS :Not enough parameters\r\n"; //err 461
             //ou err 462 direct ?, a voir comment ca fonctionne
+            send(socket_fd, response.c_str(), response.size(), 0);
             return 1;
         }
         if(_clientsDB.find(socket_fd) != _clientsDB.end()) {
-            std::cout << socket_fd << " :You may not reregister" << std::endl; //err 462
+
+            response = convertIntToStr(socket_fd) + " :You may not reregister\r\n"; //err 462
+            send(socket_fd, response.c_str(), response.size(), 0);
             return 1;
         }
+        return 0;
     }
-    if (data.rfind("NICK ", 0) == 0) {
+
+    else if (data.rfind("NICK", 0) == 0) {
+        std::cout << "in NICK parsing" << std::endl;
         std::string nickname = data.substr(5);
+        std::cout << "nickname = " << nickname << std::endl;
         if(nickname.empty() || nickname[0] == '\0' || countSpaces(data) != 1) { //j'arrive pas tester avec telnet a voir plus tard
-            std::cout << RED << socket_fd << " " << nickname << " :No nickname given" END << std::endl; //err 431
+            std::cout << RED "Error no nickname" END << std::endl;
+            response = convertIntToStr(socket_fd) + " " + nickname + " :No nickname given\r\n"; //err 431
+            send(socket_fd, response.c_str(), response.size(), 0);
             return 1;
         }
         if(client.checkNicknameForm(nickname) == 1) {
-            std::cout << RED << socket_fd << " " << nickname << " :Erroneus nickname" END << std::endl; //err 432
-            return 1; 
+            std::cout << RED "Error format nickname" END << std::endl;
+            std::map<int, Client>::iterator it = _clientsDB.find(socket_fd);
+            if (it != _clientsDB.end()) {
+                // response = ":" + this->_serverName + " 432 " + it->second.getClientNickname() + " " + nickname + " :Erroneus nickname\r\n";
+                response = convertIntToStr(socket_fd) + " " + nickname + " :Erroneus nickname\r\n"; //err 432
+                send(socket_fd, response.c_str(), response.size(), 0);
+                return 1; 
+            }
+            else
+                return 1; //send error client not found in clientdb
         }
         if(client.checkNicknameExist(nickname, ircserver) == 1) {
-            std::cout << RED << socket_fd << " " << nickname << " :Nickname is already in use" END << std::endl; //err 433
+            std::cout << RED "Nickname already exist" END << std::endl;
+            response = convertIntToStr(socket_fd) + " " + nickname + " :Nickname is already in use\r\n"; //err 433
+            send(socket_fd, response.c_str(), response.size(), 0);
             return 1;
         }
-        _clientsDB.find(socket_fd)->second.setClientNickname("nickname");
+        std::map<int, Client>::iterator it = _clientsDB.find(socket_fd);
+        if (it != _clientsDB.end()) {
+            std::cout << GREEN "Nickname changed" END << std::endl;
+            response = ":" + it->second.getClientNickname() + "!" + "user" + "@" + "host" + " NICK :" + nickname + "\r\n";
+            send(socket_fd, response.c_str(), response.size(), 0);
+            it->second.setClientNickname(nickname);
+            return 0;
+        }
+        else
+            return 1;//send error client not found in clientdb
     }
-    if (data.rfind("USER ", 0) == 0) {
+
+    else if (data.rfind("USER", 0) == 0) {
         if(_clientsDB.find(socket_fd) != _clientsDB.end()) {
-            std::cout << socket_fd << " :You may not reregister" << std::endl; //err 462
+            response = convertIntToStr(socket_fd) + " :You may not reregister"; //err 462
             return 1;
         }
+        return 0;
     }
-    if (data.rfind("JOIN ", 0) == 0) {
 
-    }
-    if (data.rfind("PART ", 0) == 0) {
-        
-    }
-    if (data.rfind("TOPIC ", 0) == 0) {
+    // else if (data.rfind("JOIN", 0) == 0) {
 
-    }
-    if (data.rfind("INVITE ", 0) == 0) {
-        
-    }
-    if (data.rfind("KICK ", 0) == 0) {
+    // }
 
-    }
-    //MODE only channel mode (i t k o l)
-    if (data.rfind("MODE ", 0) == 0) {
+    // else if (data.rfind("PART", 0) == 0) {
         
-    }
-    if (data.rfind("PRIVMSG ", 0) == 0) {
+    // }
+
+    // else if (data.rfind("TOPIC", 0) == 0) {
+
+    // }
+
+    // else if (data.rfind("INVITE", 0) == 0) {
+        
+    // }
+
+    // else if (data.rfind("KICK", 0) == 0) {
+
+    // }
+
+    // //MODE only channel mode (i t k o l), et MODE nickname +i (1ere co du client)
+    // else if (data.rfind("MODE", 0) == 0) {
+        
+    // }
+
+    else if (data.rfind("PRIVMSG", 0) == 0) {
         if(data.find(':') == data.size() || countSpacesUntilColon(data) > 2) {
-            std::cout << socket_fd << " PRIVMSG :Not enough parameters" << std::endl; //err 461
+            response = convertIntToStr(socket_fd) + " PRIVMSG :Not enough parameters"; //err 461
+            std::cout << RED "Error privmsg not enough paramaters" END << std::endl;
+            send(socket_fd, response.c_str(), response.size(), 0);
             return 1;
         }
         if(countSpacesUntilColon(data) == 1) {
-            std::cout << socket_fd << " :No recipient given (PRIVMSG)" << std::endl; //err 411
+            response = convertIntToStr(socket_fd) + " :No recipient given (PRIVMSG)"; //err 411
+            std::cout << RED "Error privmsg no recipient" END << std::endl;
+            send(socket_fd, response.c_str(), response.size(), 0);
             return 1;
         }
         if(data.find(':') == data.size()-1) {
-            std::cout << socket_fd << " :No text to send" << std::endl; //err 412
+            response = convertIntToStr(socket_fd) + " :No text to send"; //err 412
+            std::cout << RED "Error privmsg no text" END << std::endl;
+            send(socket_fd, response.c_str(), response.size(), 0);
             return 1;
         }
-        std::string nick = data.substr(data.find(' '));
-        if(countSpacesUntilColon(data) == 2 && client.checkNicknameExist(nick, ircserver) == 1) { //ajouter checkServerExist() ?
+        std::string nick_search = data.substr(data.find(' '));
+        if(client.checkNicknameExist(nick_search, ircserver) == 0) {
+            response = convertIntToStr(socket_fd) + " :No such nick/channel"; //err 401
+            std::cout << RED "Error privmsg no such nick/channel" END << std::endl;
+            send(socket_fd, response.c_str(), response.size(), 0);
+            return 1;
+        }
+        if(countSpacesUntilColon(data) == 2 && client.checkNicknameExist(nick_search, ircserver) == 1) { //ajouter checkServerExist() ?
             std::cout << "ok" << std::endl;
             //send message
             return 0;
         }
-    }
-    else {
-        std::cout << socket_fd  << " " << data.substr(0, data.find(" ")) << " :Unknown command" << std::endl; //err 421
+        std::cout << "return 1" << std::endl;
         return 1;
     }
-    return 0;
+
+    else {
+        response = convertIntToStr(socket_fd) + " " + data.substr(0, data.find(" ")) + " :Unknown command"; //err 421
+        return 1;
+    }
 }
 
 int Server::receiveReq(int socket_fd, Server ircserver) {
@@ -359,9 +411,12 @@ int Server::receiveReq(int socket_fd, Server ircserver) {
     else {
         buf[bytes] = '\0';
         if(parseReq(socket_fd, buf, ircserver) == 1)
-            return 1;
-        else
+        {
             std::cout << "Parsing req error" << std::endl;
+            return 1;
+        }
+        else
+            std::cout << "Parsing req ok" << std::endl;
     }
     return 0;
 }

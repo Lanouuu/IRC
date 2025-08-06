@@ -20,3 +20,9 @@ size_t countSpacesUntilColon(std::string data) {
             count ++;
     return count;
 }
+
+std::string convertIntToStr(int nb) {
+    std::ostringstream oss;
+    oss << nb;
+    return oss.str();
+}

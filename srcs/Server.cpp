@@ -32,6 +32,7 @@ Server::~Server(void)
 {
     if (_serverSocket != -1)
         close(_serverSocket);
+    // clearDBclients();
     return ;
 }
 
@@ -76,6 +77,15 @@ std::string Server::getServerName(void) const
 /****************************************************************************/
 /*                           Members Functions                              */
 /****************************************************************************/
+
+void Server::clearDBclients() {
+    for(std::map<int, Client>::iterator it = this->getClientsDB().begin(); it != this->getClientsDB().end(); it++)
+    {
+        if(it->first)
+            close(it->first);
+    }
+    this->_clientsDB.clear();
+}
 
 void   Server::checkArgs(int ac)
 {

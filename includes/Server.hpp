@@ -43,6 +43,7 @@ class   Server
 
         void                serverListen(int epoll_fd);
         void                addClient(int socket_fd, int epoll_fd);
+        void                clearDBclients();
 
     private:
     

@@ -29,3 +29,44 @@ std::string RPL_ISUPPORT(const std::string & server, const std::string & nick)
     std::string buf = ":" + server + " 005 " + nick + " CHANTYPES=#" + " :are supported by this server" + "\r\n";
     return (buf);
 }
+
+std::string ERR_NONICKNAMEGIVEN(const std::string & server, const std::string & nick, const std::string & user)
+{
+    std::string buf;
+    if (nick.empty() && user.empty())
+        buf = ":" + server + " 431 " + "*" + " :No nickname given" + "\r\n";
+    else if (user.empty())
+        buf = ":" + server + " 431 " + nick + " :No nickname given" + "\r\n";
+    else if (nick.empty())
+        buf = ":" + server + " 431 " + user + " :No nickname given" + "\r\n";
+    else
+        buf = ":" + server + " 431 " + nick + " :No nickname given" + "\r\n";
+    return (buf);
+}
+
+std::string ERR_ERRONEUSNICKNAME(const std::string & server, const std::string & nick, const std::string & user)
+{
+    std::string buf;
+    if (user.empty())
+        buf = ":" + server + " 432 " + "* " + nick + " :Erroneus nickname" + "\r\n";
+    else
+        buf = ":" + server + " 432 " + user + " " + nick + " :Erroneus nickname" + "\r\n";
+    return (buf);
+}
+
+std::string ERR_NICKNAMEINUSE(const std::string & server, const std::string & nick, const std::string & user)
+{
+    std::string buf;
+    if (user.empty())
+        buf = ":" + server + " 433 " + "* " + nick + " :Nickname is already in use" + "\r\n";
+    else
+        buf = ":" + server + " 433 " + user + " " + nick + " :Nickname is already in use" + "\r\n";
+    return (buf);
+}
+
+std::string ERR_NEEDMOREPARAMS(const std::string & server, const std::string & nick, const std::string & command)
+{
+    std::string buf;
+    buf = ":" + server + " 461 " + nick + " " + command + " :Not enough parameters" + "\r\n";
+    return (buf);
+}

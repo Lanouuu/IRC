@@ -68,6 +68,11 @@ const client_map    &Server::getClientsDB(void) const
     return (this->_clientsDB);
 }
 
+std::string Server::getServerName(void) const
+{
+    return (this->_serverName);
+}
+
 /****************************************************************************/
 /*                           Members Functions                              */
 /****************************************************************************/
@@ -232,28 +237,42 @@ void    Server::connectionReply(int client_fd, const std::string & nick)
     return ;
 }
 
-void    Server::setClient(Client & client, int const & socket_fd, int const & epoll_fd)
+int    Server::setClient(Client & client, int const & socket_fd, int const & epoll_fd)
 {
-        int clientSocket = accept(socket_fd, NULL, NULL);
+        int clientSocket;
+        if ((clientSocket = accept(socket_fd, NULL, NULL)) == -1)
+        {
+            std::cerr << RED << "Error: accept: " << strerror(errno) << END << std::endl;
+            return (1);
+        }
         client.setSocket(clientSocket);
         client.getClientEpollStruct().events = EPOLLIN;
         client.getClientEpollStruct().data.fd = clientSocket;
         if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, clientSocket, &client.getClientEpollStruct()) == -1)
+        {
             std::cerr << RED << "Error: epoll_ctl: " << strerror(errno) << END << std::endl;
-        return ;
+            close(clientSocket);
+            return (1);
+        }
+        return (0);
 }
 
 void    Server::addClient(int socket_fd, int epoll_fd)
 {
     Client client_temp;
     
-    setClient(client_temp, socket_fd, epoll_fd);
+    if (setClient(client_temp, socket_fd, epoll_fd) == 1)
+        return ;
     client_temp.setServName(_serverName);
     client_temp.setNetwork(_serverNetwork);
     char buf_client[1024];
     recv(client_temp.getSocket(), buf_client, 1024, 0);
     std::string data(buf_client);
-    client_temp.parseClient(data, client_temp.getSocket(), *this);
+    if (client_temp.parseClient(data, client_temp.getSocket(), *this) == 1)
+    {
+        close(client_temp.getSocket());
+        return ;
+    }
     connectionReply(client_temp.getSocket(), client_temp.getClientNickname());
     _clientsDB.insert(std::make_pair(client_temp.getSocket(), client_temp));
     return ;

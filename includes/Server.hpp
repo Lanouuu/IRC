@@ -15,10 +15,11 @@
 # include <unistd.h>
 # include <sys/epoll.h>
 # include <map>
+# include <vector>
 # include <utility>
 # include "numerics.hpp"
 # include "Client.hpp"
-#include "Utils.hpp"
+# include "Utils.hpp"
 
 class Client;
 
@@ -38,6 +39,7 @@ class   Server
         client_map &        getClientsDB(void);
         const client_map &  getClientsDB(void) const;
         void                getClientsList() const;
+        std::string         getServerName(void) const;
 
         void                serverListen(int epoll_fd);
         void                addClient(int socket_fd, int epoll_fd);
@@ -65,7 +67,7 @@ class   Server
         void                fillStruct(void);
         void                fillSocket(void);
         void                launchServer(int epoll_fd);
-        void                setClient(Client & client, int const & socket_fd, int const & epoll_fd);
+        int                 setClient(Client & client, int const & socket_fd, int const & epoll_fd);
         void                connectionReply(int client_fd, const std::string & nick);
         int                 receiveReq(int socket_fd, Server ircserver);
         int                 parseReq(int socket_fd, char *buf, Server & ircserver);

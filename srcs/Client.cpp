@@ -150,16 +150,19 @@ int Client::parseClient(std::string &data, int client_fd, Server &ircserver) {
         if(line.rfind("NICK ", 0) == 0)
         {
             nickName = line.substr(5);
-            if(nickName.empty() || nickName[0] == '\0') { //j'arrive pas tester avec telnet a voir plus tard
-                std::cout << RED << client_fd << " " << nickName << " :No nickname given" END << std::endl; //err 431
+            if(nickName.empty() || nickName[0] == '\0') {
+                std::string err = ERR_NONICKNAMEGIVEN(ircserver.getServerName(), nickName, userName);
+                send(client_fd, err.c_str(), err.size(), 0);
                 return 1;
             }
             if(checkNicknameForm(nickName) == 1) {
-                std::cout << RED << client_fd << " " << nickName << " :Erroneus nickname" END << std::endl; //err 432
+                std::string err = ERR_ERRONEUSNICKNAME(ircserver.getServerName(), nickName, userName);
+                send(client_fd, err.c_str(), err.size(), 0);
                 return 1;
             }
             if(checkNicknameExist(nickName, ircserver) == 1) {
-                std::cout << RED << client_fd << " " << nickName << " :Nickname is already in use" END << std::endl; //err 433
+                std::string err = ERR_NICKNAMEINUSE(ircserver.getServerName(), nickName, userName);
+                send(client_fd, err.c_str(), err.size(), 0);
                 return 1;
             }
             _clientNickname = nickName;
@@ -173,13 +176,15 @@ int Client::parseClient(std::string &data, int client_fd, Server &ircserver) {
                     count ++;
             }
             if(count != 4) {
-                std::cout << RED << client_fd << "USER :Not enough parameters" END << std::endl; //err 461
+                std::string err = ERR_NEEDMOREPARAMS(ircserver.getServerName(), _clientNickname, "USER");
+                send(client_fd, err.c_str(), err.size(), 0);
                 return 1;
             }
             size_t pos = line.find(' ', 5); // 2eme space pour recup l'username
             userName = line.substr(5, pos - 5);
             if(userName.size() == 0 || userName[0] == 0) {
-                std::cout << RED << client_fd << "USER :Not enough parameters" END << std::endl; //err 461
+                std::string err = ERR_NEEDMOREPARAMS(ircserver.getServerName(), _clientNickname, "USER");
+                send(client_fd, err.c_str(), err.size(), 0);
                 return 1;
             }
             realName = line.substr(pos2 + 1);

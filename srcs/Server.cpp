@@ -68,6 +68,18 @@ const client_map    &Server::getClientsDB(void) const
     return (this->_clientsDB);
 }
 
+
+std::map<std::string, Channel> const & Server::getChannels() const
+{
+    return _channels;
+}
+
+std::map<std::string, Channel>::iterator  Server::getChannel(std::string const & key)
+{
+    std::map<std::string, Channel>::iterator it = _channels.find(key);
+    return it;
+}
+
 /****************************************************************************/
 /*                           Members Functions                              */
 /****************************************************************************/
@@ -347,10 +359,23 @@ int Server::parseReq(int socket_fd, char *buf, Server & ircserver) {
         }
         return 0;
     }
+    else if (data.rfind("JOIN", 0) == 0) {
+        Client client = _clientsDB.find(socket_fd)->second;
+        std::cout << BLUE "Client NAME = " << client.getClientNickname() << END << std::endl;
+        std::string name = data.substr(5, data.size() - 5);
+        std::cout << BLUE << name << END << std::endl;
+        if (channelExist(name))
+        {
+            if (memberExist(client.getClientNickname(), getChannel(name)->second))
+                std::cout << "ERROR" << std::endl;
+            else
+                joinChannel(name, client);
 
-    // else if (data.rfind("JOIN", 0) == 0) {
-
-    // }
+        }
+        else
+            createChannel(name);
+        return 1;
+    }
 
     // else if (data.rfind("PART", 0) == 0) {
         
@@ -438,4 +463,31 @@ int Server::receiveReq(int socket_fd, Server ircserver) {
             std::cout << "Parsing req ok" << std::endl;
     }
     return 0;
+}
+
+int Server::channelExist(std::string const & name)
+{
+    if (getChannel(name) != _channels.end())
+        return 1;
+    return 0;
+}
+
+int Server::memberExist(std::string const & nickname, Channel const & channel) const 
+{
+    if (channel.getMembers().find(nickname) != channel.getMembers().end())
+        return 1;
+    return 0;
+}
+
+void    Server::joinChannel(std::string const & name, Client & client)
+{
+    std::map<std::string, Channel>::iterator it = getChannel(name);
+    it->second.addMember(client);
+    std::cout << BLUE "MEMBER " << client.getClientNickname() << " ADDED" END << std::endl;
+}
+
+void    Server::createChannel(std::string const & name)
+{
+    _channels.insert(std::pair<std::string, Channel>(name, Channel()));
+    std::cout << BLUE "CHANNEL: " << name << " CREATED" END << std::endl;
 }

@@ -19,8 +19,10 @@
 # include "numerics.hpp"
 # include "Client.hpp"
 #include "Utils.hpp"
+#include "Channel.hpp"
 
 class Client;
+class Channel;
 
 typedef std::map<int, Client> client_map;
 
@@ -38,7 +40,8 @@ class   Server
         client_map &        getClientsDB(void);
         const client_map &  getClientsDB(void) const;
         void                getClientsList() const;
-
+        std::map<std::string, Channel> const & getChannels() const;
+        std::map<std::string, Channel>::iterator    getChannel(std::string const & key);
         void                serverListen(int epoll_fd);
         void                addClient(int socket_fd, int epoll_fd);
 
@@ -56,6 +59,7 @@ class   Server
         std::string         _serverNetwork;
         std::string         _serverVersion;
         std::string         _serverDate;
+        std::map<std::string, Channel> _channels;
 
         void                checkArgs(int ac);
         void                parsePort(std::string & port);
@@ -69,6 +73,10 @@ class   Server
         void                connectionReply(int client_fd, const std::string & nick);
         int                 receiveReq(int socket_fd, Server ircserver);
         int                 parseReq(int socket_fd, char *buf, Server & ircserver);
+        int                 channelExist(std::string const & name);
+        void                joinChannel(std::string const & name, Client & client);
+        int                 memberExist(std::string const & nickname, Channel const & channel) const;
+        void                createChannel(std::string const & name);
 
 };
   

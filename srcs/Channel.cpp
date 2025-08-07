@@ -33,6 +33,11 @@ void    Channel::setInvitation(std::string const & mode)
         _inviteOnlyIsSet = false;
 }
 
+std::map<std::string, Client> const &   Channel::getMembers() const
+{
+    return _members;
+}
+
 std::string const & Channel::getPassword() const
 {
     return _password;
@@ -74,4 +79,9 @@ void    Channel::broadcast(std::string const & message) const
     {
         send(it->second.getSocket(), message.c_str(), message.size(), 0);
     }
+}
+
+void    Channel::addMember(Client & client)
+{
+    _members.insert(std::pair<std::string, Client>(client.getClientNickname(), client));
 }

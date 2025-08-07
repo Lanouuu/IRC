@@ -213,7 +213,7 @@ void    Server::serverListen(int epoll_fd)
                 else
                 {
                     std::cout << "req received" << std::endl;
-                    if(receiveReq(socket_fd, *this) == 1)
+                    if(receiveReq(epoll_fd, socket_fd, *this) == 1)
                     {
                         std::cout << "error in req" << std::endl; 
                     }
@@ -266,7 +266,17 @@ void    Server::addClient(int socket_fd, int epoll_fd)
     client_temp.setServName(_serverName);
     client_temp.setNetwork(_serverNetwork);
     char buf_client[1024];
-    recv(client_temp.getSocket(), buf_client, 1024, 0);
+    if (recv(client_temp.getSocket(), buf_client, 1024, 0) <= 0)
+    {
+        if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, client_temp.getSocket(), &client_temp.getClientEpollStruct()) == -1)
+        {
+            std::cerr << RED << "Error: epoll_ctl: " << strerror(errno) << END << std::endl;
+            close(client_temp.getSocket());
+            return ;
+        }
+        close(client_temp.getSocket());
+        return ;
+    }
     std::string data(buf_client);
     if (client_temp.parseClient(data, client_temp.getSocket(), *this) == 1)
     {
@@ -435,14 +445,21 @@ int Server::parseReq(int socket_fd, char *buf, Server & ircserver) {
     }
 }
 
-int Server::receiveReq(int socket_fd, Server ircserver) {
+int Server::receiveReq(int epoll_fd, int socket_fd, Server ircserver) {
     char buf[1024];
     memset(buf, 0, sizeof(buf));
     ssize_t bytes = recv(socket_fd, buf, 1024, 0);
     std::cout << RED << buf << END << std::endl;
     if(bytes <= 0) {
         std::cout << RED "Client " << socket_fd << " disconnected" END << std::endl;
-        //clear client
+
+        if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, socket_fd, &_clientsDB[socket_fd].getClientEpollStruct()) == -1)
+        {
+            std::cerr << RED << "Error: epoll_ctl: " << strerror(errno) << END << std::endl;
+            close(socket_fd);
+            return 1;
+        }
+        _clientsDB.erase(socket_fd);
         close(socket_fd);
         return 1;
     }

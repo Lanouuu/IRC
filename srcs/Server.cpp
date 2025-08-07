@@ -208,7 +208,12 @@ void    Server::serverListen(int epoll_fd)
     {
         std::cout << "epoll wait" << std::endl;
         if((n_event = epoll_wait(epoll_fd, events, MAX_EVENTS, -1)) == -1)
-            throw std::runtime_error( RED "Error: epoll_wait: " END + std::string(strerror(errno)));
+        {
+            if (stop == 0)
+                throw std::runtime_error( RED "Error: epoll_wait: " END + std::string(strerror(errno)));
+            else
+                return ;
+        }
         std::cout << "Event catch" << std::endl;
         for (int i = 0; i < n_event; i++) 
         {

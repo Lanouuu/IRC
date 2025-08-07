@@ -44,6 +44,7 @@ class   Client
 
         
         std::string             getClientNickname() const;
+        int                     getFDtoSend(std::string nickName, Server &ircserver);
         int                     getSocket();
         std::string             getClientRealname();
         std::string             getClientUsername();

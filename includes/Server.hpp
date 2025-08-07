@@ -37,6 +37,7 @@ class   Server
         int                 getSocket(void) const;
         client_map &        getClientsDB(void);
         const client_map &  getClientsDB(void) const;
+        void                getClientsList() const;
 
         void                serverListen(int epoll_fd);
         void                addClient(int socket_fd, int epoll_fd);

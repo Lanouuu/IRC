@@ -259,13 +259,24 @@ void    Server::addClient(int socket_fd, int epoll_fd)
     return ;
 }
 
+//print list of clients nicknames in the server
+void Server::getClientsList() const {
+    std::cout << "List of clients in server " << this->_serverName << " :" << std::endl;
+    for(std::map<int, Client>::const_iterator it = this->getClientsDB().begin(); it != this->getClientsDB().end(); it++)
+        std::cout << "[" <<it->second.getClientNickname() << "]" << std::endl;
+    std::cout << std::endl;
+}
+
 int Server::parseReq(int socket_fd, char *buf, Server & ircserver) {
     std::string data(buf);
     std::string response;
     Client client;
+    if (!data.empty() && data.find('\r') != std::string::npos)
+        data.erase(data.find('\r'));
+    if (data.find('\n') != std::string::npos)
+        data.erase(data.find('\n'));
 
-    if (!data.empty() && data[data.size() - 1] == '\r')
-        data.erase(data.size() - 1);
+    getClientsList();
 
     if (data.rfind("PASS", 0) == 0) {
         if(countSpaces(data) != 1) {
@@ -285,8 +296,14 @@ int Server::parseReq(int socket_fd, char *buf, Server & ircserver) {
 
     else if (data.rfind("NICK", 0) == 0) {
         std::cout << "in NICK parsing" << std::endl;
+        if (data == "NICK") { // a tester avec telnet, 
+            std::cout << RED "Nickname already exist" END << std::endl;
+            response = convertIntToStr(socket_fd) + " :No nickname is given\r\n"; //err 431
+            send(socket_fd, response.c_str(), response.size(), 0);
+            return 1;
+        }
         std::string nickname = data.substr(5);
-        std::cout << "nickname = " << nickname << std::endl;
+        // std::cout << "nickname = [" << nickname << "]" << std::endl;
         if(nickname.empty() || nickname[0] == '\0' || countSpaces(data) != 1) { //j'arrive pas tester avec telnet a voir plus tard
             std::cout << RED "Error no nickname" END << std::endl;
             response = convertIntToStr(socket_fd) + " " + nickname + " :No nickname given\r\n"; //err 431
@@ -323,7 +340,7 @@ int Server::parseReq(int socket_fd, char *buf, Server & ircserver) {
             return 1;//send error client not found in clientdb
     }
 
-    else if (data.rfind("USER", 0) == 0) {
+    else if (data.rfind("USER", 0) == 0) { // a tester avec telnet, automatique à la connexion, Envoyée automatiquement par IRSSI
         if(_clientsDB.find(socket_fd) != _clientsDB.end()) {
             response = convertIntToStr(socket_fd) + " :You may not reregister"; //err 462
             return 1;
@@ -375,16 +392,18 @@ int Server::parseReq(int socket_fd, char *buf, Server & ircserver) {
             send(socket_fd, response.c_str(), response.size(), 0);
             return 1;
         }
-        std::string nick_search = data.substr(data.find(' '));
-        if(client.checkNicknameExist(nick_search, ircserver) == 0) {
+        std::string nick_search = data.substr(8, data.find(' ', 8) - 8);
+        std::cout << "nick search = " << nick_search << std::endl;
+        if(client.checkNicknameExist(nick_search, *this) == 0) {
             response = convertIntToStr(socket_fd) + " :No such nick/channel"; //err 401
             std::cout << RED "Error privmsg no such nick/channel" END << std::endl;
             send(socket_fd, response.c_str(), response.size(), 0);
             return 1;
         }
         if(countSpacesUntilColon(data) == 2 && client.checkNicknameExist(nick_search, ircserver) == 1) { //ajouter checkServerExist() ?
-            std::cout << "ok" << std::endl;
-            //send message
+            std::cout << GREEN "SEND msg" END << std::endl;
+            // response = ": " & [ this->getClientsDB().find(socket_fd)->first ] + "!~user@host PRIVMSG " + nick_search + data.substr(data.find(':'));
+            send(client.getFDtoSend(nick_search, *this), response.c_str(), response.size(), 0);
             return 0;
         }
         std::cout << "return 1" << std::endl;

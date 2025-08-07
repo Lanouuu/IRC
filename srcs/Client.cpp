@@ -109,6 +109,16 @@ int Client::checkNicknameExist(std::string nickName, Server &ircserver) {
     return 0;
 }
 
+// return FD of the client to send, ajouter le send pour un channel
+int Client::getFDtoSend(std::string nickName, Server &ircserver) {
+    for(std::map<int, Client>::const_iterator it = ircserver.getClientsDB().begin(); it != ircserver.getClientsDB().end(); it++)
+    {
+        if(it->second.getClientNickname() == nickName)
+            return it->first;
+    }
+    return 0;
+}
+
 int Client::checkNicknameForm(std::string nickName) {
     if(nickName.find(' ') != std::string::npos || nickName.find(',') != std::string::npos ||
     nickName.find('*') != std::string::npos || nickName.find('?') != std::string::npos ||

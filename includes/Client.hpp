@@ -45,7 +45,7 @@ class   Client
         
         std::string             getClientNickname() const;
         int                     getFDtoSend(std::string nickName, Server &ircserver);
-        int                     getSocket();
+        int const &             getSocket() const;
         std::string             getClientRealname();
         std::string             getClientUsername();
         struct epoll_event &    getClientEpollStruct();

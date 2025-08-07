@@ -11,7 +11,8 @@ Server::Server(void)
 
 Server::Server(int ac, char **av, int epoll_fd) 
     : _serverIP("127.0.0.1"), 
-    _serverSocket(-1), 
+    _serverSocket(-1),
+    _serverEpollFD(epoll_fd),
     _serverName("irc.42.fr"), 
     _serverNetwork("42IRC"), 
     _serverVersion("1.0")
@@ -214,16 +215,21 @@ void    Server::serverListen(int epoll_fd)
             else
                 return ;
         }
-        std::cout << "Event catch" << std::endl;
+        
         for (int i = 0; i < n_event; i++) 
         {
-            int socket_fd = events[i].data.fd; // -> correspond a la socket du server;
+            int socket_fd = events[i].data.fd;
             if (events[i].events & EPOLLIN) 
             {
+                std::cout << "EPOLLIN catch" << std::endl;
+                int client_fd;
                 if (socket_fd == _serverSocket)
                 {
                     std::cout << "create client" << std::endl;
-                    addClient(socket_fd, epoll_fd);
+                    if ((client_fd = addClient(socket_fd, epoll_fd)) == -1)
+                    {
+
+                    }   
                 }
                 else
                 {
@@ -232,24 +238,66 @@ void    Server::serverListen(int epoll_fd)
                     {
                         std::cout << "error in req" << std::endl; 
                     }
+                    client_fd = socket_fd;
                 }
+                if (setEpollOut(_clientsDB[client_fd]) == 1)
+                    std::cerr << RED << "set out error" << END << std::endl;
+            }
+            else if (events[i].events & EPOLLOUT)
+            {
+                std::cout << "EPOLLOUT catch" << std::endl;
+                Client & temp = _clientsDB[socket_fd];
+                if (!temp.getBuf().empty())
+                {
+                    std::cout << BLUE << temp.getBuf() << END << std::endl;
+                    send(socket_fd, temp.getBuf().c_str(), temp.getBuf().size(), 0);
+                    temp.getBuf().clear();
+                }
+                else
+                    std::cout << RED "Buffer empty" END << std::endl;
+                if (setEpollIn(temp) == 1)
+                    std::cerr << RED << "set in error" << END << std::endl;
             }
         }
     }
     return ;
 }
 
-void    Server::connectionReply(int client_fd, const std::string & nick)
+void    Server::connectionReply(Client & client, const std::string & nick)
 {
     std::string welcome = RPL_WELCOME(_serverName, nick, _serverNetwork);
     std::string yourhost = RPL_YOURHOST(_serverName, nick, _serverVersion);
     std::string created = RPL_CREATED(_serverName, nick, _serverDate);
     std::string my_info = RPL_MYINFO(_serverName, nick, _serverVersion);
     std::string isupport = RPL_ISUPPORT(_serverName, nick);
-    std::string buf = welcome + yourhost + created + my_info + isupport;
-
-    send(client_fd, buf.c_str(), buf.size(), 0);
+    client.setBuf(welcome + yourhost + created + my_info + isupport);
     return ;
+}
+
+int    Server::setEpollOut(Client & client)
+{
+    client.getClientEpollStruct().events = EPOLLOUT;
+    if (epoll_ctl(_serverEpollFD, EPOLL_CTL_MOD, client.getSocket(), &client.getClientEpollStruct()) == -1)
+    {
+        std::cerr << RED << "Error: epoll_ctl: " << strerror(errno) << END << std::endl;
+        close(client.getSocket());
+        _clientsDB.erase(client.getSocket());
+        return (1);
+    }
+    return (0);
+}
+
+int    Server::setEpollIn(Client & client)
+{
+    client.getClientEpollStruct().events = EPOLLIN;
+    if (epoll_ctl(_serverEpollFD, EPOLL_CTL_MOD, client.getSocket(), &client.getClientEpollStruct()) == -1)
+    {
+        std::cerr << RED << "Error: epoll_ctl: " << strerror(errno) << END << std::endl;
+        close(client.getSocket());
+        _clientsDB.erase(client.getSocket());
+        return (1);
+    }
+    return (0);
 }
 
 int    Server::setClient(Client & client, int const & socket_fd, int const & epoll_fd)
@@ -272,12 +320,12 @@ int    Server::setClient(Client & client, int const & socket_fd, int const & epo
         return (0);
 }
 
-void    Server::addClient(int socket_fd, int epoll_fd)
+int    Server::addClient(int socket_fd, int epoll_fd)
 {
     Client client_temp;
     
     if (setClient(client_temp, socket_fd, epoll_fd) == 1)
-        return ;
+        return (-1);
     client_temp.setServName(_serverName);
     client_temp.setNetwork(_serverNetwork);
     char buf_client[1024];
@@ -287,20 +335,20 @@ void    Server::addClient(int socket_fd, int epoll_fd)
         {
             std::cerr << RED << "Error: epoll_ctl: " << strerror(errno) << END << std::endl;
             close(client_temp.getSocket());
-            return ;
+            return (-1);
         }
         close(client_temp.getSocket());
-        return ;
+        return (-1);
     }
     std::string data(buf_client);
-    if (client_temp.parseClient(data, client_temp.getSocket(), *this) == 1)
+    if (client_temp.parseClient(data, *this) == 1)
     {
         close(client_temp.getSocket());
-        return ;
+        return (-1);
     }
-    connectionReply(client_temp.getSocket(), client_temp.getClientNickname());
+    connectionReply(client_temp, client_temp.getClientNickname());
     _clientsDB.insert(std::make_pair(client_temp.getSocket(), client_temp));
-    return ;
+    return (client_temp.getSocket());
 }
 
 //print list of clients nicknames in the server
@@ -469,11 +517,7 @@ int Server::receiveReq(int epoll_fd, int socket_fd, Server ircserver) {
         std::cout << RED "Client " << socket_fd << " disconnected" END << std::endl;
 
         if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, socket_fd, &_clientsDB[socket_fd].getClientEpollStruct()) == -1)
-        {
             std::cerr << RED << "Error: epoll_ctl: " << strerror(errno) << END << std::endl;
-            close(socket_fd);
-            return 1;
-        }
         _clientsDB.erase(socket_fd);
         close(socket_fd);
         return 1;

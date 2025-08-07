@@ -24,6 +24,7 @@ class   Client
         std::string             _serverName;
         std::string             _serverNetwork;
         struct epoll_event      _clientEvent;
+        std::string             _clientBuf;
 
         bool                    _isOperator; //Channel moderators are identified by the channel member prefix '@'
         bool                    _canKick;
@@ -49,10 +50,12 @@ class   Client
         std::string             getClientRealname();
         std::string             getClientUsername();
         struct epoll_event &    getClientEpollStruct();
+        std::string &           getBuf(void);
         void                    setSocket(int socket);
         void                    setClientNickname(std::string nick);
         void                    setServName(std::string & name);
         void                    setNetwork(std::string & network);
+        void                    setBuf(std::string buf);
         
         int                     checkNicknameForm(std::string nickName);
         int                     checkNicknameExist(std::string nickName, Server &ircserver);
@@ -62,7 +65,7 @@ class   Client
         // void setOperator();   // MODE o
         // void setLimit();      // MODE l
 
-        int                     parseClient(std::string &data, int client_fd, Server &ircserver);
+        int                     parseClient(std::string &data, Server &ircserver);
 };
 
 #endif

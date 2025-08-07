@@ -46,6 +46,7 @@ Client &    Client::operator=(const Client & rhs)
     this->_canOperator = rhs._canOperator;
     this->_canLimit = rhs._canLimit;
     this->_clientEvent = rhs._clientEvent;
+    this->_clientBuf = rhs._clientBuf;
     return (*this);
 }
 
@@ -74,6 +75,11 @@ struct epoll_event & Client::getClientEpollStruct()
     return _clientEvent;
 }
 
+std::string & Client::getBuf(void)
+{
+    return (_clientBuf);
+}
+
 void    Client::setSocket(int socket)
 {
     this->_clientSocket = socket;
@@ -93,6 +99,12 @@ void    Client::setServName(std::string & name)
 void    Client::setNetwork(std::string & network)
 {
     this->_serverNetwork = network;
+    return ;
+}
+
+void    Client::setBuf(std::string buf)
+{
+    this->_clientBuf = buf;
     return ;
 }
 
@@ -131,12 +143,12 @@ int Client::checkNicknameForm(std::string nickName) {
     return 0;
 }
 
-int Client::parseClient(std::string &data, int client_fd, Server &ircserver) {
+int Client::parseClient(std::string &data, Server &ircserver) {
     std::istringstream iss(data);
     std::string line, password, nickName, realName, userName;
 
     // ircserver.getClientsDB().insert(std::make_pair<int, Client>(99, Client("alan"))); //test doublon
-
+    std::cout << BLUE << data << END << std::endl;
     while (std::getline(iss, line)) {
         if (!line.empty() && line[line.size() - 1] == '\r')
             line.erase(line.size() - 1);
@@ -152,21 +164,19 @@ int Client::parseClient(std::string &data, int client_fd, Server &ircserver) {
         {
             nickName = line.substr(5);
             if(nickName.empty() || nickName[0] == '\0') {
-                std::string err = ERR_NONICKNAMEGIVEN(ircserver.getServerName(), nickName, userName);
-                send(client_fd, err.c_str(), err.size(), 0);
+                _clientBuf = ERR_NONICKNAMEGIVEN(ircserver.getServerName(), nickName, userName);
                 return 1;
             }
             if(checkNicknameForm(nickName) == 1) {
-                std::string err = ERR_ERRONEUSNICKNAME(ircserver.getServerName(), nickName, userName);
-                send(client_fd, err.c_str(), err.size(), 0);
+                _clientBuf = ERR_ERRONEUSNICKNAME(ircserver.getServerName(), nickName, userName);
                 return 1;
             }
             if(checkNicknameExist(nickName, ircserver) == 1) {
-                std::string err = ERR_NICKNAMEINUSE(ircserver.getServerName(), nickName, userName);
-                send(client_fd, err.c_str(), err.size(), 0);
+                _clientBuf = ERR_NICKNAMEINUSE(ircserver.getServerName(), nickName, userName);
                 return 1;
             }
             _clientNickname = nickName;
+            std::cout << BLUE "NICKNAME = " << _clientNickname << END << std::endl;
         }
         if(line.rfind("USER ", 0) == 0)
         {
@@ -177,15 +187,13 @@ int Client::parseClient(std::string &data, int client_fd, Server &ircserver) {
                     count ++;
             }
             if(count != 4) {
-                std::string err = ERR_NEEDMOREPARAMS(ircserver.getServerName(), _clientNickname, "USER");
-                send(client_fd, err.c_str(), err.size(), 0);
+                _clientBuf = ERR_NEEDMOREPARAMS(ircserver.getServerName(), _clientNickname, "USER");
                 return 1;
             }
             size_t pos = line.find(' ', 5); // 2eme space pour recup l'username
             userName = line.substr(5, pos - 5);
             if(userName.size() == 0 || userName[0] == 0) {
-                std::string err = ERR_NEEDMOREPARAMS(ircserver.getServerName(), _clientNickname, "USER");
-                send(client_fd, err.c_str(), err.size(), 0);
+                _clientBuf = ERR_NEEDMOREPARAMS(ircserver.getServerName(), _clientNickname, "USER");
                 return 1;
             }
             realName = line.substr(pos2 + 1);

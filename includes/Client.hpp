@@ -20,6 +20,8 @@ class   Client
         int const &             getSocket() const;
         std::string             getClientRealname();
         std::string             getClientUsername();
+        std::string &           getBufIN(void);
+        std::string &           getBufOUT(void);
         void                    setSocket(int socket);
         void                    setClientNickname(std::string nick);
         void                    setServName(std::string & name);

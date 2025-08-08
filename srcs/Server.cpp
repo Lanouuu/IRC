@@ -264,8 +264,7 @@ void    Server::addClient(int socket_fd)
 void    Server::readClient(int socket_fd)
 {
     char    buf[1024];
-    size_t  bytes = recv(socket_fd, buf, sizeof(buf), 0);
-    if (bytes <= 0) 
+    if (recv(socket_fd, buf, sizeof(buf), 0) <= 0)
     {
         close(socket_fd);
         FD_CLR(socket_fd, &_masterSet);
@@ -273,17 +272,91 @@ void    Server::readClient(int socket_fd)
     } 
     else 
     {
-        bytesReceived(buf, bytes, socket_fd);
+        bytesReceived(buf, socket_fd);
     }
     return ;
 }
 
-void    Server::bytesReceived(char buf[1024], size_t bytes, int socket_fd)
+void    Server::bytesReceived(char buf[1024], int socket_fd)
 {
-   // Client & temp = _clientsDB[socket_fd];
+   Client & client_temp = _clientsDB[socket_fd];
+   size_t   pos;
 
-   // temp.getBufIN()
+   client_temp.getBufIN().append(buf);
+   while ((pos = client_temp.getBufIN().find("\r\n")) != std::string::npos)
+   {
+        std::string req = client_temp.getBufIN().substr(0, pos);
+        execCMD(client_temp, req);
+
+   }
+   return ;
 }
+
+
+
+/*********Execute Commands*********/
+
+
+
+void    Server::execCMD(Client & client_temp, std::string & req)
+{
+    std::string                 cmd;
+    std::vector<std::string>    args;
+
+    parseCMD(req, cmd, args);
+    if (cmd == "CAP")
+        return ;
+    else if (cmd == "PASS")
+        PASS(client_temp, args);
+    else if (cmd == "NICK")
+        NICK(client_temp, args);
+    else if (cmd == "USER")
+        USER(client_temp, args);
+}
+
+void    Server::parseCMD(std::string & req, std::string & cmd, std::vector<std::string> & args)
+{
+    std::istringstream  stream(req);
+    std::string         buf;
+    int                 n_word = 0;
+
+    while (std::getline(stream, buf, ' '))
+    {
+        if (n_word == 0)
+            cmd = buf;
+        else
+            args.push_back(buf);
+        n_word++;
+    }
+    return ;
+}
+
+
+
+
+/*********Commands IRC*********/
+
+
+
+void    Server::PASS(Client &  client_temp, std::vector<std::string> & args)
+{
+
+}
+
+void    Server::NICK(Client &  client_temp, std::vector<std::string> & args)
+{
+
+}
+
+void    Server::USER(Client &  client_temp, std::vector<std::string> & args)
+{
+
+}
+
+
+
+
+
 
 //print list of clients nicknames in the server
 void Server::getClientsList() const {

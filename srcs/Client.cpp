@@ -67,6 +67,16 @@ std::string Client::getClientUsername() {
     return _clientUsername;
 }
 
+std::string &   Client::getBufIN(void)
+{
+    return (_clientBufIN);
+}
+
+std::string &   Client::getBufOUT(void)
+{
+    return (_clientBufOUT);
+}
+
 void    Client::setSocket(int socket)
 {
     this->_clientSocket = socket;

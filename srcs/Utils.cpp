@@ -1,5 +1,10 @@
 #include "Utils.hpp"
 
+void signal_handler(int s) {
+    std::cout << RED <<  "Caught signal " << s << END << std::endl;
+    stop = 1;
+}
+
 //return nb of spaces " " in data
 size_t countSpaces(std::string data) {
     int count = 0;

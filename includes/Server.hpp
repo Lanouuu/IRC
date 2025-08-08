@@ -17,6 +17,7 @@
 # include <utility>
 # include <arpa/inet.h>
 # include <sys/select.h>
+# include <signal.h>
 # include <errno.h>
 # include "numerics.hpp"
 # include "Client.hpp"
@@ -72,7 +73,13 @@ class   Server
         void                addClient(int socket_fd);
         int                 setClient(Client & client, int const & socket_fd);
         void                readClient(int socket_fd);
-        void                bytesReceived(char buf[1024], size_t bytes, int socket_fd);
+        void                bytesReceived(char buf[1024], int socket_fd);
+        void                execCMD(Client & client_temp, std::string & req);
+        void                parseCMD(std::string & req, std::string & cmd, std::vector<std::string> & args);
+
+        void                PASS(Client &  client_temp, std::vector<std::string> & args);
+        void                NICK(Client &  client_temp, std::vector<std::string> & args);
+        void                USER(Client &  client_temp, std::vector<std::string> & args);
 };
   
 #endif

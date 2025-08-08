@@ -280,9 +280,9 @@ void    Server::readClient(int socket_fd)
 
 void    Server::bytesReceived(char buf[1024], size_t bytes, int socket_fd)
 {
-    Client & temp = _clientsDB[socket_fd];
+   // Client & temp = _clientsDB[socket_fd];
 
-    temp.getBufIN()
+   // temp.getBufIN()
 }
 
 //print list of clients nicknames in the server

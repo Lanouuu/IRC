@@ -9,7 +9,7 @@ Server::Server(void)
     return ;
 }
 
-Server::Server(int ac, char **av, int epoll_fd) 
+Server::Server(int ac, char **av) 
     : _serverIP("127.0.0.1"), 
     _serverSocket(-1), 
     _serverName("irc.42.fr"), 
@@ -24,7 +24,7 @@ Server::Server(int ac, char **av, int epoll_fd)
     getCreationDate();
     fillStruct();
     fillSocket();
-    launchServer(epoll_fd);
+    launchServer();
     return ;
 }
 
@@ -76,6 +76,12 @@ std::string Server::getServerName(void) const
 /****************************************************************************/
 /*                           Members Functions                              */
 /****************************************************************************/
+
+
+
+/*********Parsing Server Arguments*********/
+
+
 
 void   Server::checkArgs(int ac)
 {
@@ -144,6 +150,12 @@ void    Server::passwordErr(char c)
     throw std::invalid_argument(buf.str());
 }
 
+
+
+/*********Launching Server*********/
+
+
+
 void    Server::getCreationDate(void) 
 {
     std::time_t now = std::time(NULL);
@@ -176,68 +188,47 @@ void    Server::fillSocket(void)
     return ;
 }
 
-void    Server::launchServer(int epoll_fd)
+void    Server::launchServer(void)
 {
     if (bind(_serverSocket, (struct sockaddr *)&_serverStruct, sizeof(_serverStruct)) == -1)
         throw std::runtime_error(RED "Error: bind: " END + std::string(strerror(errno)));
     if (listen(_serverSocket, 4096) == -1)
         throw std::runtime_error(RED "Error: listen: " END + std::string(strerror(errno)));
-    struct epoll_event  event;
-    event.events = EPOLLIN;
-    event.data.fd = _serverSocket;
-    if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, _serverSocket, &event) == -1)
-        throw std::runtime_error("Error: epoll_ctl: " + std::string(strerror(errno)));
+    FD_ZERO(&_masterSet);
+    FD_ZERO(&_tempSet);
+    FD_SET(_serverSocket, &_masterSet);
+    _serverFdMax = _serverSocket;
     return ;
 }
 
-void    Server::serverListen(int epoll_fd)
+void    Server::serverListen(void)
 {
-    int                 n_event;
-    struct epoll_event  events[MAX_EVENTS]; // tableau d'event
     while (1)
     {
-        std::cout << "epoll wait" << std::endl;
-        if((n_event = epoll_wait(epoll_fd, events, MAX_EVENTS, -1)) == -1)
-            throw std::runtime_error( RED "Error: epoll_wait: " END + std::string(strerror(errno)));
-        std::cout << "Event catch" << std::endl;
-        for (int i = 0; i < n_event; i++) 
+        _tempSet = _masterSet;
+
+        select(_serverFdMax + 1, &_tempSet, NULL, NULL, NULL);
+        for (int socket = 0; socket < _serverFdMax; socket++) 
         {
-            int socket_fd = events[i].data.fd; // -> correspond a la socket du server;
-            if (events[i].events & EPOLLIN) 
+            if (FD_ISSET(socket, &_tempSet)) 
             {
-                if (socket_fd == _serverSocket)
-                {
-                    std::cout << "create client" << std::endl;
-                    addClient(socket_fd, epoll_fd);
-                }
-                else
-                {
-                    std::cout << "req received" << std::endl;
-                    if(receiveReq(epoll_fd, socket_fd, *this) == 1)
-                    {
-                        std::cout << "error in req" << std::endl; 
-                    }
-                }
+                if (socket == _serverSocket) 
+                    addClient(socket);
+                else 
+                    readClient(socket);
             }
         }
     }
     return ;
 }
 
-void    Server::connectionReply(int client_fd, const std::string & nick)
-{
-    std::string welcome = RPL_WELCOME(_serverName, nick, _serverNetwork);
-    std::string yourhost = RPL_YOURHOST(_serverName, nick, _serverVersion);
-    std::string created = RPL_CREATED(_serverName, nick, _serverDate);
-    std::string my_info = RPL_MYINFO(_serverName, nick, _serverVersion);
-    std::string isupport = RPL_ISUPPORT(_serverName, nick);
-    std::string buf = welcome + yourhost + created + my_info + isupport;
 
-    send(client_fd, buf.c_str(), buf.size(), 0);
-    return ;
-}
 
-int    Server::setClient(Client & client, int const & socket_fd, int const & epoll_fd)
+/*********Adding Client*********/
+
+
+
+int    Server::setClient(Client & client, int const & socket_fd)
 {
         int clientSocket;
         if ((clientSocket = accept(socket_fd, NULL, NULL)) == -1)
@@ -246,46 +237,52 @@ int    Server::setClient(Client & client, int const & socket_fd, int const & epo
             return (1);
         }
         client.setSocket(clientSocket);
-        client.getClientEpollStruct().events = EPOLLIN;
-        client.getClientEpollStruct().data.fd = clientSocket;
-        if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, clientSocket, &client.getClientEpollStruct()) == -1)
-        {
-            std::cerr << RED << "Error: epoll_ctl: " << strerror(errno) << END << std::endl;
-            close(clientSocket);
-            return (1);
-        }
+        FD_SET(clientSocket, &_masterSet);
+        if (clientSocket > _serverFdMax) 
+            _serverFdMax = clientSocket;
         return (0);
 }
 
-void    Server::addClient(int socket_fd, int epoll_fd)
+void    Server::addClient(int socket_fd)
 {
     Client client_temp;
     
-    if (setClient(client_temp, socket_fd, epoll_fd) == 1)
+    if (setClient(client_temp, socket_fd) == 1)
         return ;
     client_temp.setServName(_serverName);
     client_temp.setNetwork(_serverNetwork);
-    char buf_client[1024];
-    if (recv(client_temp.getSocket(), buf_client, 1024, 0) <= 0)
-    {
-        if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, client_temp.getSocket(), &client_temp.getClientEpollStruct()) == -1)
-        {
-            std::cerr << RED << "Error: epoll_ctl: " << strerror(errno) << END << std::endl;
-            close(client_temp.getSocket());
-            return ;
-        }
-        close(client_temp.getSocket());
-        return ;
-    }
-    std::string data(buf_client);
-    if (client_temp.parseClient(data, client_temp.getSocket(), *this) == 1)
-    {
-        close(client_temp.getSocket());
-        return ;
-    }
-    connectionReply(client_temp.getSocket(), client_temp.getClientNickname());
     _clientsDB.insert(std::make_pair(client_temp.getSocket(), client_temp));
     return ;
+}
+
+
+
+/*********Reading Client*********/
+
+
+
+void    Server::readClient(int socket_fd)
+{
+    char    buf[1024];
+    size_t  bytes = recv(socket_fd, buf, sizeof(buf), 0);
+    if (bytes <= 0) 
+    {
+        close(socket_fd);
+        FD_CLR(socket_fd, &_masterSet);
+        std::cout << RED << "Client déconnecté : " << socket_fd << END << std::endl;
+    } 
+    else 
+    {
+        bytesReceived(buf, bytes, socket_fd);
+    }
+    return ;
+}
+
+void    Server::bytesReceived(char buf[1024], size_t bytes, int socket_fd)
+{
+    Client & temp = _clientsDB[socket_fd];
+
+    temp.getBufIN()
 }
 
 //print list of clients nicknames in the server
@@ -294,184 +291,4 @@ void Server::getClientsList() const {
     for(std::map<int, Client>::const_iterator it = this->getClientsDB().begin(); it != this->getClientsDB().end(); it++)
         std::cout << "[" <<it->second.getClientNickname() << "]" << std::endl;
     std::cout << std::endl;
-}
-
-int Server::parseReq(int socket_fd, char *buf, Server & ircserver) {
-    std::string data(buf);
-    std::string response;
-    Client client;
-    if (!data.empty() && data.find('\r') != std::string::npos)
-        data.erase(data.find('\r'));
-    if (data.find('\n') != std::string::npos)
-        data.erase(data.find('\n'));
-
-    getClientsList();
-
-    if (data.rfind("PASS", 0) == 0) {
-        if(countSpaces(data) != 1) {
-            response = convertIntToStr(socket_fd) + " PASS :Not enough parameters\r\n"; //err 461
-            //ou err 462 direct ?, a voir comment ca fonctionne
-            send(socket_fd, response.c_str(), response.size(), 0);
-            return 1;
-        }
-        if(_clientsDB.find(socket_fd) != _clientsDB.end()) {
-
-            response = convertIntToStr(socket_fd) + " :You may not reregister\r\n"; //err 462
-            send(socket_fd, response.c_str(), response.size(), 0);
-            return 1;
-        }
-        return 0;
-    }
-
-    else if (data.rfind("NICK", 0) == 0) {
-        std::cout << "in NICK parsing" << std::endl;
-        if (data == "NICK") { // a tester avec telnet, 
-            std::cout << RED "Nickname already exist" END << std::endl;
-            response = convertIntToStr(socket_fd) + " :No nickname is given\r\n"; //err 431
-            send(socket_fd, response.c_str(), response.size(), 0);
-            return 1;
-        }
-        std::string nickname = data.substr(5);
-        // std::cout << "nickname = [" << nickname << "]" << std::endl;
-        if(nickname.empty() || nickname[0] == '\0' || countSpaces(data) != 1) { //j'arrive pas tester avec telnet a voir plus tard
-            std::cout << RED "Error no nickname" END << std::endl;
-            response = convertIntToStr(socket_fd) + " " + nickname + " :No nickname given\r\n"; //err 431
-            send(socket_fd, response.c_str(), response.size(), 0);
-            return 1;
-        }
-        if(client.checkNicknameForm(nickname) == 1) {
-            std::cout << RED "Error format nickname" END << std::endl;
-            std::map<int, Client>::iterator it = _clientsDB.find(socket_fd);
-            if (it != _clientsDB.end()) {
-                // response = ":" + this->_serverName + " 432 " + it->second.getClientNickname() + " " + nickname + " :Erroneus nickname\r\n";
-                response = convertIntToStr(socket_fd) + " " + nickname + " :Erroneus nickname\r\n"; //err 432
-                send(socket_fd, response.c_str(), response.size(), 0);
-                return 1; 
-            }
-            else
-                return 1; //send error client not found in clientdb
-        }
-        if(client.checkNicknameExist(nickname, ircserver) == 1) {
-            std::cout << RED "Nickname already exist" END << std::endl;
-            response = convertIntToStr(socket_fd) + " " + nickname + " :Nickname is already in use\r\n"; //err 433
-            send(socket_fd, response.c_str(), response.size(), 0);
-            return 1;
-        }
-        std::map<int, Client>::iterator it = _clientsDB.find(socket_fd);
-        if (it != _clientsDB.end()) {
-            std::cout << GREEN "Nickname changed" END << std::endl;
-            response = ":" + it->second.getClientNickname() + "!" + "user" + "@" + "host" + " NICK :" + nickname + "\r\n";
-            send(socket_fd, response.c_str(), response.size(), 0);
-            it->second.setClientNickname(nickname);
-            return 0;
-        }
-        else
-            return 1;//send error client not found in clientdb
-    }
-
-    else if (data.rfind("USER", 0) == 0) { // a tester avec telnet, automatique à la connexion, Envoyée automatiquement par IRSSI
-        if(_clientsDB.find(socket_fd) != _clientsDB.end()) {
-            response = convertIntToStr(socket_fd) + " :You may not reregister"; //err 462
-            return 1;
-        }
-        return 0;
-    }
-
-    // else if (data.rfind("JOIN", 0) == 0) {
-
-    // }
-
-    // else if (data.rfind("PART", 0) == 0) {
-        
-    // }
-
-    // else if (data.rfind("TOPIC", 0) == 0) {
-
-    // }
-
-    // else if (data.rfind("INVITE", 0) == 0) {
-        
-    // }
-
-    // else if (data.rfind("KICK", 0) == 0) {
-
-    // }
-
-    // //MODE only channel mode (i t k o l), et MODE nickname +i (1ere co du client)
-    // else if (data.rfind("MODE", 0) == 0) {
-        
-    // }
-
-    else if (data.rfind("PRIVMSG", 0) == 0) {
-        if(data.find(':') == data.size() || countSpacesUntilColon(data) > 2) {
-            response = convertIntToStr(socket_fd) + " PRIVMSG :Not enough parameters"; //err 461
-            std::cout << RED "Error privmsg not enough paramaters" END << std::endl;
-            send(socket_fd, response.c_str(), response.size(), 0);
-            return 1;
-        }
-        if(countSpacesUntilColon(data) == 1) {
-            response = convertIntToStr(socket_fd) + " :No recipient given (PRIVMSG)"; //err 411
-            std::cout << RED "Error privmsg no recipient" END << std::endl;
-            send(socket_fd, response.c_str(), response.size(), 0);
-            return 1;
-        }
-        if(data.find(':') == data.size()-1) {
-            response = convertIntToStr(socket_fd) + " :No text to send"; //err 412
-            std::cout << RED "Error privmsg no text" END << std::endl;
-            send(socket_fd, response.c_str(), response.size(), 0);
-            return 1;
-        }
-        std::string nick_search = data.substr(8, data.find(' ', 8) - 8);
-        std::cout << "nick search = " << nick_search << std::endl;
-        if(client.checkNicknameExist(nick_search, *this) == 0) {
-            response = convertIntToStr(socket_fd) + " :No such nick/channel"; //err 401
-            std::cout << RED "Error privmsg no such nick/channel" END << std::endl;
-            send(socket_fd, response.c_str(), response.size(), 0);
-            return 1;
-        }
-        if(countSpacesUntilColon(data) == 2 && client.checkNicknameExist(nick_search, ircserver) == 1) { //ajouter checkServerExist() ?
-            std::cout << GREEN "SEND msg" END << std::endl;
-            // response = ": " & [ this->getClientsDB().find(socket_fd)->first ] + "!~user@host PRIVMSG " + nick_search + data.substr(data.find(':'));
-            send(client.getFDtoSend(nick_search, *this), response.c_str(), response.size(), 0);
-            return 0;
-        }
-        std::cout << "return 1" << std::endl;
-        return 1;
-    }
-
-    else {
-        response = convertIntToStr(socket_fd) + " " + data.substr(0, data.find(" ")) + " :Unknown command"; //err 421
-        return 1;
-    }
-}
-
-int Server::receiveReq(int epoll_fd, int socket_fd, Server ircserver) {
-    char buf[1024];
-    memset(buf, 0, sizeof(buf));
-    ssize_t bytes = recv(socket_fd, buf, 1024, 0);
-    std::cout << RED << buf << END << std::endl;
-    if(bytes <= 0) {
-        std::cout << RED "Client " << socket_fd << " disconnected" END << std::endl;
-
-        if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, socket_fd, &_clientsDB[socket_fd].getClientEpollStruct()) == -1)
-        {
-            std::cerr << RED << "Error: epoll_ctl: " << strerror(errno) << END << std::endl;
-            close(socket_fd);
-            return 1;
-        }
-        _clientsDB.erase(socket_fd);
-        close(socket_fd);
-        return 1;
-    }
-    else {
-        buf[bytes] = '\0';
-        if(parseReq(socket_fd, buf, ircserver) == 1)
-        {
-            std::cout << "Parsing req error" << std::endl;
-            return 1;
-        }
-        else
-            std::cout << "Parsing req ok" << std::endl;
-    }
-    return 0;
 }

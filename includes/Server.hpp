@@ -6,17 +6,18 @@
 # define BLUE	"\033[0;36m"
 # define END	"\033[0m"
 
-# define MAX_EVENTS 1024
-
-#include <ctime>
+# include <ctime>
+# include <cstdlib>
 # include <cstring>
 # include <sstream>
 # include <exception>
 # include <unistd.h>
-# include <sys/epoll.h>
 # include <map>
 # include <vector>
 # include <utility>
+# include <arpa/inet.h>
+# include <sys/select.h>
+# include <errno.h>
 # include "numerics.hpp"
 # include "Client.hpp"
 # include "Utils.hpp"
@@ -29,8 +30,7 @@ class   Server
 {
     public:
 
-        
-        Server(int ac, char **av, int epoll_fd);
+        Server(int ac, char **av);
         ~Server(void);
 
         uint16_t            getPort(void) const;
@@ -41,13 +41,15 @@ class   Server
         void                getClientsList() const;
         std::string         getServerName(void) const;
 
-        void                serverListen(int epoll_fd);
-        void                addClient(int socket_fd, int epoll_fd);
+        void                serverListen(void);
 
     private:
     
         Server(void);
 
+        fd_set              _masterSet;
+        fd_set              _tempSet;
+        int                 _serverFdMax;
         std::string         _serverIP;
         uint16_t            _serverPort;
         std::string         _serverPassword;
@@ -66,12 +68,11 @@ class   Server
         void                getCreationDate(void);
         void                fillStruct(void);
         void                fillSocket(void);
-        void                launchServer(int epoll_fd);
-        int                 setClient(Client & client, int const & socket_fd, int const & epoll_fd);
-        void                connectionReply(int client_fd, const std::string & nick);
-        int                 receiveReq(int epoll_fd, int socket_fd, Server ircserver);
-        int                 parseReq(int socket_fd, char *buf, Server & ircserver);
-
+        void                launchServer(void);
+        void                addClient(int socket_fd);
+        int                 setClient(Client & client, int const & socket_fd);
+        void                readClient(int socket_fd);
+        void                bytesReceived(char buf[1024], size_t bytes, int socket_fd);
 };
   
 #endif

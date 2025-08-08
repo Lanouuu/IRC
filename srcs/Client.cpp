@@ -44,7 +44,6 @@ Client &    Client::operator=(const Client & rhs)
     this->_canTopic = rhs._canTopic;
     this->_canOperator = rhs._canOperator;
     this->_canLimit = rhs._canLimit;
-    this->_clientEvent = rhs._clientEvent;
     return (*this);
 }
 
@@ -66,11 +65,6 @@ std::string Client::getClientRealname() {
 
 std::string Client::getClientUsername() {
     return _clientUsername;
-}
-
-struct epoll_event & Client::getClientEpollStruct()
-{
-    return _clientEvent;
 }
 
 void    Client::setSocket(int socket)
@@ -99,98 +93,12 @@ void    Client::setNetwork(std::string & network)
 /*                           Members Functions                              */
 /****************************************************************************/
 
-//return 1 if exist
-int Client::checkNicknameExist(std::string nickName, Server &ircserver) {
-    for(std::map<int, Client>::const_iterator it = ircserver.getClientsDB().begin(); it != ircserver.getClientsDB().end(); it++)
-    {
-        if(it->second.getClientNickname() == nickName)
-            return 1;
-    }
-    return 0;
-}
-
 // return FD of the client to send, ajouter le send pour un channel
 int Client::getFDtoSend(std::string nickName, Server &ircserver) {
     for(std::map<int, Client>::const_iterator it = ircserver.getClientsDB().begin(); it != ircserver.getClientsDB().end(); it++)
     {
         if(it->second.getClientNickname() == nickName)
             return it->first;
-    }
-    return 0;
-}
-
-int Client::checkNicknameForm(std::string nickName) {
-    if(nickName.find(' ') != std::string::npos || nickName.find(',') != std::string::npos ||
-    nickName.find('*') != std::string::npos || nickName.find('?') != std::string::npos ||
-    nickName.find('!') != std::string::npos || nickName.find('@') != std::string::npos || 
-    nickName.find('.') != std::string::npos || nickName[0] == '$' || nickName[0] == ':' || 
-    nickName[0] == '#' || nickName[0] == '&' || nickName[0] == '~' || nickName[0] == ':' ||
-    nickName[0] == '%' || nickName[0] == '+')
-        return 1;
-    return 0;
-}
-
-int Client::parseClient(std::string &data, int client_fd, Server &ircserver) {
-    std::istringstream iss(data);
-    std::string line, password, nickName, realName, userName;
-
-    // ircserver.getClientsDB().insert(std::make_pair<int, Client>(99, Client("alan"))); //test doublon
-
-    while (std::getline(iss, line)) {
-        if (!line.empty() && line[line.size() - 1] == '\r')
-            line.erase(line.size() - 1);
-        if(line.rfind("PASS ", 0) == 0)
-        {
-            password = line.substr(5);
-            if(password != ircserver.getServerPassword()) {
-                std::cout << RED "Wrong server password : " << password << END << std::endl;
-                return 1;
-            }
-        }
-        if(line.rfind("NICK ", 0) == 0)
-        {
-            nickName = line.substr(5);
-            if(nickName.empty() || nickName[0] == '\0') {
-                std::string err = ERR_NONICKNAMEGIVEN(ircserver.getServerName(), nickName, userName);
-                send(client_fd, err.c_str(), err.size(), 0);
-                return 1;
-            }
-            if(checkNicknameForm(nickName) == 1) {
-                std::string err = ERR_ERRONEUSNICKNAME(ircserver.getServerName(), nickName, userName);
-                send(client_fd, err.c_str(), err.size(), 0);
-                return 1;
-            }
-            if(checkNicknameExist(nickName, ircserver) == 1) {
-                std::string err = ERR_NICKNAMEINUSE(ircserver.getServerName(), nickName, userName);
-                send(client_fd, err.c_str(), err.size(), 0);
-                return 1;
-            }
-            _clientNickname = nickName;
-        }
-        if(line.rfind("USER ", 0) == 0)
-        {
-            int count = 0;
-            size_t pos2 = line.find_last_of(':');
-            for(size_t i = 0; i < pos2; i++) {
-                if(line[i] == ' ')
-                    count ++;
-            }
-            if(count != 4) {
-                std::string err = ERR_NEEDMOREPARAMS(ircserver.getServerName(), _clientNickname, "USER");
-                send(client_fd, err.c_str(), err.size(), 0);
-                return 1;
-            }
-            size_t pos = line.find(' ', 5); // 2eme space pour recup l'username
-            userName = line.substr(5, pos - 5);
-            if(userName.size() == 0 || userName[0] == 0) {
-                std::string err = ERR_NEEDMOREPARAMS(ircserver.getServerName(), _clientNickname, "USER");
-                send(client_fd, err.c_str(), err.size(), 0);
-                return 1;
-            }
-            realName = line.substr(pos2 + 1);
-            _clientUsername = userName;
-            _clientRealname = realName;
-        }
     }
     return 0;
 }

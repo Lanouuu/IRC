@@ -1,7 +1,5 @@
 #include "Utils.hpp"
 
-volatile sig_atomic_t stop = 0;
-
 void signal_handler(int s) {
     std::cout << RED <<  "Caught signal " << s << END << std::endl;
     stop = 1;

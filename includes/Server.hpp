@@ -1,11 +1,6 @@
 #ifndef SERVER_HPP
 # define SERVER_HPP
 
-# define GREEN 	"\033[0;32m"
-# define RED	"\033[0;31m"
-# define BLUE	"\033[0;36m"
-# define END	"\033[0m"
-
 # include <ctime>
 # include <cstdlib>
 # include <cstring>
@@ -17,7 +12,6 @@
 # include <utility>
 # include <arpa/inet.h>
 # include <sys/select.h>
-# include <signal.h>
 # include <errno.h>
 # include "numerics.hpp"
 # include "Client.hpp"
@@ -39,10 +33,11 @@ class   Server
         int                 getSocket(void) const;
         client_map &        getClientsDB(void);
         const client_map &  getClientsDB(void) const;
-        void                getClientsList() const;
         std::string         getServerName(void) const;
-
+        
         void                serverListen(void);
+        void                clearServer(void);
+        void                printClientsList(void) const;
 
     private:
     
@@ -72,14 +67,16 @@ class   Server
         void                launchServer(void);
         void                addClient(int socket_fd);
         int                 setClient(Client & client, int const & socket_fd);
-        void                readClient(int socket_fd);
-        void                bytesReceived(char buf[1024], int socket_fd);
-        void                execCMD(Client & client_temp, std::string & req);
+        void                readClient(Client & client_temp, int socket_fd);
+        void                connectionReply(Client & client_temp);
+        void                checkDisconnectClient(Client & client_temp);
+        void                bytesReceived(Client & client_temp, char buf[1024]);
+        int                 execCMD(Client & client_temp, std::string & req);
         void                parseCMD(std::string & req, std::string & cmd, std::vector<std::string> & args);
 
-        void                PASS(Client &  client_temp, std::vector<std::string> & args);
+        int                 PASS(Client &  client_temp, std::string & cmd, std::vector<std::string> & args);
         void                NICK(Client &  client_temp, std::vector<std::string> & args);
-        void                USER(Client &  client_temp, std::vector<std::string> & args);
+        void                USER(Client &  client_temp, std::string & cmd, std::vector<std::string> & args);
 };
   
 #endif

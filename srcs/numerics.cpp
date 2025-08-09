@@ -1,5 +1,11 @@
 #include "numerics.hpp"
 
+
+/****************************************************************************/
+/*                              RPL Numerics                                */
+/****************************************************************************/
+
+
 std::string RPL_WELCOME(const std::string & server, const std::string & nick, const std::string & network)
 {
     std::string buf = ":" + server + " 001 " + nick + " :Welcome to the " + network + " Network, " + nick + "\r\n";
@@ -26,9 +32,15 @@ std::string RPL_MYINFO(const std::string & server, const std::string & nick, con
 
 std::string RPL_ISUPPORT(const std::string & server, const std::string & nick)
 {
-    std::string buf = ":" + server + " 005 " + nick + " CHANTYPES=#" + " :are supported by this server" + "\r\n";
+    std::string buf = ":" + server + " 005 " + nick + " CHANTYPES=# NICKLEN=9 USERLEN=12" + " :are supported by this server" + "\r\n";
     return (buf);
 }
+
+
+/****************************************************************************/
+/*                              ERR Numerics                                */
+/****************************************************************************/
+
 
 std::string ERR_NONICKNAMEGIVEN(const std::string & server, const std::string & nick, const std::string & user)
 {
@@ -67,6 +79,25 @@ std::string ERR_NICKNAMEINUSE(const std::string & server, const std::string & ni
 std::string ERR_NEEDMOREPARAMS(const std::string & server, const std::string & nick, const std::string & command)
 {
     std::string buf;
-    buf = ":" + server + " 461 " + nick + " " + command + " :Not enough parameters" + "\r\n";
+    if (nick.empty())
+        buf = ":" + server + " 461 " + "* " + command + " :Not enough parameters" + "\r\n";
+    else
+        buf = ":" + server + " 461 " + nick + " " + command + " :Not enough parameters" + "\r\n";
+    return (buf);
+}
+
+std::string ERR_PASSWDMISMATCH(const std::string & server)
+{
+    std::string buf = ":" + server + " 464 " + "*" + " :Password incorrect" + "\r\n";
+    return (buf);
+}
+
+std::string ERR_ALREADYREGISTERED(const std::string & server, const std::string & nick)
+{
+    std::string buf;
+    if (nick.empty())
+        buf = ":" + server + " 462 " + "*" + " :You may not reregister" + "\r\n";
+    else
+        buf = ":" + server + " 462 " + nick + " :You may not reregister" + "\r\n";
     return (buf);
 }

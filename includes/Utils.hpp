@@ -1,14 +1,16 @@
 #ifndef UTILS_HPP
 # define UTILS_HPP
 
-# include "Server.hpp"
+# define GREEN 	"\033[0;32m"
+# define RED	"\033[0;31m"
+# define BLUE	"\033[0;36m"
+# define END	"\033[0m"
 
-volatile sig_atomic_t stop = 0;
+#include <signal.h>
+#include <iostream>
 
-size_t          countSpaces(std::string data);
-size_t          countSpacesUntilColon(std::string data);
-std::string     convertIntToStr(int nb);
+extern sig_atomic_t stop;
 
-void            signal_handler(int s);
+void    signal_handler(int s);
 
 #endif

@@ -1,5 +1,7 @@
 # include "Server.hpp"
 
+sig_atomic_t stop = 0;
+
 int main(int ac, char **av)
 {
     try
@@ -14,12 +16,11 @@ int main(int ac, char **av)
 
         Server  ircserver(ac, av);
         ircserver.serverListen();
+        ircserver.clearServer();
     }
     catch(const std::exception& e)
     {
         std::cerr << e.what() << '\n';
-        if (stop == 1)
-            return (0);
         return (1);
     }
     return (0);

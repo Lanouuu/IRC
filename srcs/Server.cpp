@@ -1,8 +1,10 @@
 #include "Server.hpp"
 
+
 /****************************************************************************/
 /*                      Constructors / Destructors                          */
 /****************************************************************************/
+
 
 Server::Server(void)
 {
@@ -36,6 +38,7 @@ Server::~Server(void)
     return ;
 }
 
+
 /****************************************************************************/
 /*                               Operators                                  */
 /****************************************************************************/
@@ -44,6 +47,7 @@ Server::~Server(void)
 /****************************************************************************/
 /*                           Getters / Setters                              */
 /****************************************************************************/
+
 
 uint16_t    Server::getPort(void) const
 {
@@ -73,6 +77,7 @@ std::string Server::getServerName(void) const
 {
     return (this->_serverName);
 }
+
 
 /****************************************************************************/
 /*                           Members Functions                              */
@@ -204,23 +209,48 @@ void    Server::launchServer(void)
 
 void    Server::serverListen(void)
 {
-    while (1)
+    while (!stop)
     {
         _tempSet = _masterSet;
 
         select(_serverFdMax + 1, &_tempSet, NULL, NULL, NULL);
-        for (int socket = 0; socket < _serverFdMax; socket++) 
+        if (stop)
+            return ;
+        std::cout << BLUE << "Event catch" << END << std::endl;
+        for (int socket = 0; socket <= _serverFdMax; socket++) 
         {
+            std::cout << RED " ICI boucle for" END << std::endl;
             if (FD_ISSET(socket, &_tempSet)) 
             {
+                std::cout << RED "ICI FD_ISSET" END << std::endl;
                 if (socket == _serverSocket) 
                     addClient(socket);
-                else 
-                    readClient(socket);
+                else
+                {
+                    Client & client_temp = _clientsDB[socket];
+                    readClient(client_temp, socket);
+                    connectionReply(client_temp); 
+                    if (!client_temp.getBufOUT().empty())
+                    {
+                        send(socket, client_temp.getBufOUT().c_str(), client_temp.getBufOUT().size(), 0);
+                        client_temp.getBufOUT().clear();
+                    }
+                    checkDisconnectClient(client_temp);
+                }
             }
         }
     }
     return ;
+}
+
+void    Server::clearServer(void)
+{
+    for (client_map::iterator it = _clientsDB.begin(); it != _clientsDB.end(); it++)
+    {
+        close(it->second.getSocket());
+        FD_CLR(it->second.getSocket(), &_masterSet);
+    }
+    close(_serverSocket);
 }
 
 
@@ -253,6 +283,37 @@ void    Server::addClient(int socket_fd)
     client_temp.setServName(_serverName);
     client_temp.setNetwork(_serverNetwork);
     _clientsDB.insert(std::make_pair(client_temp.getSocket(), client_temp));
+    std::cout << BLUE "Client ajoute" END << std::endl;
+    return ;
+}
+
+void    Server::connectionReply(Client & client_temp)
+{
+    if (!client_temp.getIsConnected())
+    {
+        if (client_temp.getIsPass() && !client_temp.getClientNickname().empty() && !client_temp.getClientUsername().empty())
+        {
+            //std::string cap = "CAP END";
+            std::string welcome = RPL_WELCOME(_serverName, client_temp.getClientNickname(), _serverNetwork);
+            std::string yourhost = RPL_YOURHOST(_serverName, client_temp.getClientNickname(), _serverVersion);
+            std::string created = RPL_CREATED(_serverName, client_temp.getClientNickname(), _serverDate);
+            std::string myinfo = RPL_MYINFO(_serverName, client_temp.getClientNickname(), _serverVersion);
+            std::string isupport = RPL_ISUPPORT(_serverName, client_temp.getClientNickname());
+            client_temp.getBufOUT() = welcome + yourhost + created + myinfo + isupport;
+        }
+        client_temp.getIsConnected() = true;
+    }
+    return ;
+}
+
+void    Server::checkDisconnectClient(Client & client_temp)
+{
+    if (client_temp.getDisconnectClient())
+    {
+        close(client_temp.getSocket());
+        FD_CLR(client_temp.getSocket(), &_masterSet);
+        _clientsDB.erase(client_temp.getSocket());
+    }
     return ;
 }
 
@@ -262,7 +323,7 @@ void    Server::addClient(int socket_fd)
 
 
 
-void    Server::readClient(int socket_fd)
+void    Server::readClient(Client & client_temp, int socket_fd)
 {
     char    buf[1024];
     if (recv(socket_fd, buf, sizeof(buf), 0) <= 0)
@@ -272,23 +333,22 @@ void    Server::readClient(int socket_fd)
         std::cout << RED << "Client déconnecté : " << socket_fd << END << std::endl;
     } 
     else 
-    {
-        bytesReceived(buf, socket_fd);
-    }
+        bytesReceived(client_temp, buf);
     return ;
 }
 
-void    Server::bytesReceived(char buf[1024], int socket_fd)
+void    Server::bytesReceived(Client & client_temp, char buf[1024])
 {
-   Client & client_temp = _clientsDB[socket_fd];
    size_t   pos;
 
    client_temp.getBufIN().append(buf);
    while ((pos = client_temp.getBufIN().find("\r\n")) != std::string::npos)
    {
         std::string req = client_temp.getBufIN().substr(0, pos);
-        execCMD(client_temp, req);
-
+        std::cout << BLUE "REQ = " << req << END << std::endl;
+        if (execCMD(client_temp, req) == -1)
+            return ;
+        client_temp.getBufIN().erase(0, pos + 2);
    }
    return ;
 }
@@ -299,20 +359,31 @@ void    Server::bytesReceived(char buf[1024], int socket_fd)
 
 
 
-void    Server::execCMD(Client & client_temp, std::string & req)
+int    Server::execCMD(Client & client_temp, std::string & req)
 {
     std::string                 cmd;
     std::vector<std::string>    args;
 
     parseCMD(req, cmd, args);
     if (cmd == "CAP")
-        return ;
-    else if (cmd == "PASS")
-        PASS(client_temp, args);
+        return (0) ;
+    if (client_temp.getNbCmd() == 0 && cmd != "PASS")
+    {
+        std::cout << RED << "ICI CMD 1 = PASS" END << std::endl;
+        client_temp.setDisconnectClient(true);
+        client_temp.getBufOUT() = ERR_PASSWDMISMATCH(_serverName);
+        return (-1);
+    }
+    if (cmd == "PASS")
+    {
+        if (PASS(client_temp, cmd, args) == -1)
+            return (-1);
+    }
     else if (cmd == "NICK")
         NICK(client_temp, args);
     else if (cmd == "USER")
-        USER(client_temp, args);
+        USER(client_temp, cmd, args);
+    return (0);
 }
 
 void    Server::parseCMD(std::string & req, std::string & cmd, std::vector<std::string> & args)
@@ -339,30 +410,118 @@ void    Server::parseCMD(std::string & req, std::string & cmd, std::vector<std::
 
 
 
-void    Server::PASS(Client &  client_temp, std::vector<std::string> & args)
+int    Server::PASS(Client &  client_temp, std::string & cmd, std::vector<std::string> & args)
 {
+    if (client_temp.getIsPass())
+    {
+        client_temp.getBufOUT() = ERR_ALREADYREGISTERED(_serverName, client_temp.getClientNickname());
+        return (0);
+    }
+    if (args.empty())
+    {
+        client_temp.getDisconnectClient() = true;
+        client_temp.getBufOUT() = ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), cmd);
+        return (-1);
+    }
+    std::cout << RED "size pass = " << args[0].size() << END << std::endl;
+    std::cout << RED << args[0] << END << std::endl;
+    std::cout << RED << "server pass = " << _serverPassword << END << std::endl;
+    if (args[0] != _serverPassword)
+    {
+        std::cout << RED << "ICI ERR PASS" END << std::endl;
+        client_temp.getDisconnectClient() = true;
+        client_temp.getBufOUT() = ERR_PASSWDMISMATCH(_serverName);
+        return (-1);
+    }
+    client_temp.getIsPass() = true;
+    client_temp.getNbCmd()++;
+    return (0);
+}
 
+static int checkNickFormat(std::string & nick)
+{
+    if (nick[0] == '$' || nick[0] == ':' || nick[0] == '#'
+        || nick[0] == '~' || nick[0] == '&' || nick[0] == '+' || nick[0] == '%')
+        return (1);
+    if (nick.find_first_of(" ,*?!@.") != std::string::npos)
+        return (1);
+    if (nick.size() > 9)
+        return (1);
+    return (0);
 }
 
 void    Server::NICK(Client &  client_temp, std::vector<std::string> & args)
 {
-
+    if (args.empty())
+    {
+        client_temp.getBufOUT() = ERR_NONICKNAMEGIVEN(_serverName, client_temp.getClientNickname(), client_temp.getClientUsername());
+        return ;
+    }
+    if (checkNickFormat(args[0]) == 1)
+    {
+        client_temp.getBufOUT() = ERR_ERRONEUSNICKNAME(_serverName, args[0], client_temp.getClientUsername());
+        return ;
+    }
+    for (client_map::iterator it = _clientsDB.begin(); it != _clientsDB.end(); it++)
+    {
+        if (args[0] == it->second.getClientNickname())
+        {
+            client_temp.getBufOUT() = ERR_NICKNAMEINUSE(_serverName, args[0], client_temp.getClientUsername());
+            return ;
+        }
+    }
+    client_temp.setClientNickname(args[0]);
+    client_temp.getNbCmd()++;
+    return ;
 }
 
-void    Server::USER(Client &  client_temp, std::vector<std::string> & args)
+void    Server::USER(Client &  client_temp, std::string & cmd, std::vector<std::string> & args)
 {
-
+    if (!client_temp.getClientUsername().empty())
+    {
+        client_temp.getBufOUT() = ERR_ALREADYREGISTERED(_serverName, client_temp.getClientNickname());
+        return ;
+    }
+    if (args.size() < 4 || args[0].empty() || args[0].find_first_of(" @!") != std::string::npos)
+    {
+        client_temp.getBufOUT() = ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), cmd);
+        return ;
+    }
+    std::string username;
+    if (args[0].size() > 12)
+        username = args[0].substr(0, 12);
+    else
+        username = args[0];
+    std::string mode = args[1];
+    std::string unused = args[2];
+    std::string realname;
+    if (args[4][0] == ':')
+    {
+        realname = args[4].substr(1);
+        for (size_t i = 5; i < args.size(); i++)
+            realname += " " + args[i];
+    } 
+    else 
+        realname = args[4];
+    client_temp.setClientUserName(username);
+    if (realname.empty())
+        realname = "Unknown";
+    client_temp.setClientRealName(realname);
+    client_temp.getNbCmd()++;
+    return ;
 }
 
 
 
+/*********Print Clients list*********/
 
 
 
-//print list of clients nicknames in the server
-void Server::getClientsList() const {
+void Server::printClientsList(void) const 
+{
     std::cout << "List of clients in server " << this->_serverName << " :" << std::endl;
     for(std::map<int, Client>::const_iterator it = this->getClientsDB().begin(); it != this->getClientsDB().end(); it++)
         std::cout << "[" <<it->second.getClientNickname() << "]" << std::endl;
     std::cout << std::endl;
+    return ;
 }

@@ -219,10 +219,8 @@ void    Server::serverListen(void)
         std::cout << BLUE << "Event catch" << END << std::endl;
         for (int socket = 0; socket <= _serverFdMax; socket++) 
         {
-            std::cout << RED " ICI boucle for" END << std::endl;
             if (FD_ISSET(socket, &_tempSet)) 
             {
-                std::cout << RED "ICI FD_ISSET" END << std::endl;
                 if (socket == _serverSocket) 
                     addClient(socket);
                 else
@@ -232,6 +230,7 @@ void    Server::serverListen(void)
                     connectionReply(client_temp); 
                     if (!client_temp.getBufOUT().empty())
                     {
+                        std::cout << BLUE << "TO SEND = " << client_temp.getBufOUT() << END << std::endl;
                         send(socket, client_temp.getBufOUT().c_str(), client_temp.getBufOUT().size(), 0);
                         client_temp.getBufOUT().clear();
                     }
@@ -293,13 +292,13 @@ void    Server::connectionReply(Client & client_temp)
     {
         if (client_temp.getIsPass() && !client_temp.getClientNickname().empty() && !client_temp.getClientUsername().empty())
         {
-            //std::string cap = "CAP END";
+            std::string cap = "CAP END\r\n";
             std::string welcome = RPL_WELCOME(_serverName, client_temp.getClientNickname(), _serverNetwork);
             std::string yourhost = RPL_YOURHOST(_serverName, client_temp.getClientNickname(), _serverVersion);
             std::string created = RPL_CREATED(_serverName, client_temp.getClientNickname(), _serverDate);
             std::string myinfo = RPL_MYINFO(_serverName, client_temp.getClientNickname(), _serverVersion);
             std::string isupport = RPL_ISUPPORT(_serverName, client_temp.getClientNickname());
-            client_temp.getBufOUT() = welcome + yourhost + created + myinfo + isupport;
+            client_temp.getBufOUT() = cap + welcome + yourhost + created + myinfo + isupport;
         }
         client_temp.getIsConnected() = true;
     }
@@ -310,6 +309,7 @@ void    Server::checkDisconnectClient(Client & client_temp)
 {
     if (client_temp.getDisconnectClient())
     {
+        std::cout << BLUE << "Client déconnecté : " << client_temp.getSocket() << END << std::endl;
         close(client_temp.getSocket());
         FD_CLR(client_temp.getSocket(), &_masterSet);
         _clientsDB.erase(client_temp.getSocket());
@@ -326,18 +326,24 @@ void    Server::checkDisconnectClient(Client & client_temp)
 void    Server::readClient(Client & client_temp, int socket_fd)
 {
     char    buf[1024];
-    if (recv(socket_fd, buf, sizeof(buf), 0) <= 0)
+    ssize_t bytes;
+    bytes = recv(socket_fd, buf, sizeof(buf), 0);
+    if (bytes == 0)
+        client_temp.getDisconnectClient() = true;
+    else if (bytes == -1)
     {
-        close(socket_fd);
-        FD_CLR(socket_fd, &_masterSet);
-        std::cout << RED << "Client déconnecté : " << socket_fd << END << std::endl;
-    } 
-    else 
-        bytesReceived(client_temp, buf);
+        client_temp.getDisconnectClient() = true;
+        client_temp.getBufOUT() = ERR_UNKNOWNERROR(_serverName, client_temp.getClientNickname(), "", "Server Internal Error -> recv()");
+    }
+    else
+    {
+        std::string data(buf, bytes);
+        bytesReceived(client_temp, data);
+    }
     return ;
 }
 
-void    Server::bytesReceived(Client & client_temp, char buf[1024])
+void    Server::bytesReceived(Client & client_temp, std::string & buf)
 {
    size_t   pos;
 
@@ -369,7 +375,6 @@ int    Server::execCMD(Client & client_temp, std::string & req)
         return (0) ;
     if (client_temp.getNbCmd() == 0 && cmd != "PASS")
     {
-        std::cout << RED << "ICI CMD 1 = PASS" END << std::endl;
         client_temp.setDisconnectClient(true);
         client_temp.getBufOUT() = ERR_PASSWDMISMATCH(_serverName);
         return (-1);
@@ -383,6 +388,12 @@ int    Server::execCMD(Client & client_temp, std::string & req)
         NICK(client_temp, args);
     else if (cmd == "USER")
         USER(client_temp, cmd, args);
+    else if (cmd == "PING")
+        PONG(client_temp, args);
+    else if (cmd == "MODE")
+        return (0);
+    else
+        client_temp.getBufOUT() = ERR_UNKNOWNCOMMAND(_serverName, client_temp.getClientNickname(), cmd);
     return (0);
 }
 
@@ -423,12 +434,8 @@ int    Server::PASS(Client &  client_temp, std::string & cmd, std::vector<std::s
         client_temp.getBufOUT() = ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), cmd);
         return (-1);
     }
-    std::cout << RED "size pass = " << args[0].size() << END << std::endl;
-    std::cout << RED << args[0] << END << std::endl;
-    std::cout << RED << "server pass = " << _serverPassword << END << std::endl;
     if (args[0] != _serverPassword)
     {
-        std::cout << RED << "ICI ERR PASS" END << std::endl;
         client_temp.getDisconnectClient() = true;
         client_temp.getBufOUT() = ERR_PASSWDMISMATCH(_serverName);
         return (-1);
@@ -508,6 +515,22 @@ void    Server::USER(Client &  client_temp, std::string & cmd, std::vector<std::
         realname = "Unknown";
     client_temp.setClientRealName(realname);
     client_temp.getNbCmd()++;
+    return ;
+}
+
+void    Server::PONG(Client &  client_temp, std::vector<std::string> & args)
+{
+    if (!client_temp.getIsConnected())
+    {
+        client_temp.getBufOUT() = ERR_NOTREGISTERED(_serverName, client_temp.getClientNickname());
+        return ;
+    }
+    if (args.empty())
+    {
+        client_temp.getBufOUT() = ERR_NOORIGIN(_serverName, client_temp.getClientNickname());
+        return ;
+    }
+    client_temp.getBufOUT() = "PONG " + args[0] + "\r\n";
     return ;
 }
 

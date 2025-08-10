@@ -70,13 +70,14 @@ class   Server
         void                readClient(Client & client_temp, int socket_fd);
         void                connectionReply(Client & client_temp);
         void                checkDisconnectClient(Client & client_temp);
-        void                bytesReceived(Client & client_temp, char buf[1024]);
+        void                bytesReceived(Client & client_temp, std::string & buf);
         int                 execCMD(Client & client_temp, std::string & req);
         void                parseCMD(std::string & req, std::string & cmd, std::vector<std::string> & args);
 
         int                 PASS(Client &  client_temp, std::string & cmd, std::vector<std::string> & args);
         void                NICK(Client &  client_temp, std::vector<std::string> & args);
         void                USER(Client &  client_temp, std::string & cmd, std::vector<std::string> & args);
+        void                PONG(Client &  client_temp, std::vector<std::string> & args);
 };
   
 #endif

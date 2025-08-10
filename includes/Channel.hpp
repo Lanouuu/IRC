@@ -6,6 +6,8 @@
 #include <vector>
 #include "Client.hpp"
 
+class Client;
+
 class   Channel
 {
     public:
@@ -20,13 +22,15 @@ class   Channel
         std::string const & getPassword() const;
         std::string const & getTopic() const;
         size_t const &      getLimit() const;
-        bool const &        getInvitationMode() const;
+        bool const &        isInviteOnly() const;
         bool const &        getTopicMode() const;
-        bool const &        getPasswordMode() const;
+        bool const &        passwordIsSet() const;
         bool const &        getLimitMode() const;
+        std::map<std::string, Client> const & getMembers() const;
 
         void                broadcast(std::string const & message);
-        
+        void                addMember(Client & client);
+
     private:
         std::map<std::string, Client>   _members;
         std::vector<std::string>        _operators;

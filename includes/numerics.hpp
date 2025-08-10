@@ -23,5 +23,10 @@ std::string ERR_UNKNOWNERROR(const std::string & server, const std::string & nic
 std::string ERR_UNKNOWNCOMMAND(const std::string & server, const std::string & nick, const std::string & cmd);
 std::string ERR_NOORIGIN(const std::string & server, const std::string & nick);
 std::string ERR_NOTREGISTERED(const std::string & server, const std::string & nick);
+std::string ERR_NOSUCHCHANNEL(const std::string & server, const std::string & nick, const std::string & arg);
+std::string ERR_BADCHANMASK(const std::string & server, const std::string & nick, const std::string & arg);
+std::string ERR_USERONCHANNEL(const std::string & server, const std::string & nick, const std::string & arg);
+std::string ERR_INVITEONLYCHAN(const std::string & server, const std::string & nick, const std::string & arg);
+std::string ERR_BADCHANNELKEY(const std::string & server, const std::string & nick, const std::string & arg);
 
 #endif

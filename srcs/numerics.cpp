@@ -101,3 +101,43 @@ std::string ERR_ALREADYREGISTERED(const std::string & server, const std::string 
         buf = ":" + server + " 462 " + nick + " :You may not reregister" + "\r\n";
     return (buf);
 }
+
+std::string ERR_NOSUCHCHANNEL(const std::string & server, const std::string & nick, const std::string & arg)
+{
+    std::string buf;
+    
+    buf = ":" + server + " 403 " + nick + " " + arg + " :No such channel" + "\r\n";
+    return (buf);
+}
+
+std::string ERR_BADCHANMASK(const std::string & server, const std::string & nick, const std::string & arg)
+{
+    std::string buf;
+    
+    buf = ":" + server + " 476 " + nick + " " + arg + " :Bad Channel Mask" + "\r\n";
+    return (buf);   
+}
+
+std::string ERR_USERONCHANNEL(const std::string & server, const std::string & nick, const std::string & arg)
+{
+    std::string buf;
+    
+    buf = ":" + server + " 443 " + nick + " " + arg + " :is already on channel" + "\r\n";
+    return (buf);  
+}
+
+std::string ERR_INVITEONLYCHAN(const std::string & server, const std::string & nick, const std::string & arg)
+{
+    std::string buf;
+    
+    buf = ":" + server + " 473 " + nick + " " + arg + " :Cannot join channel (+i)" + "\r\n";
+    return (buf);  
+}
+
+std::string ERR_BADCHANNELKEY(const std::string & server, const std::string & nick, const std::string & arg)
+{
+    std::string buf;
+    
+    buf = ":" + server + " 475 " + nick + " " + arg + " :Cannot join channel (+k)" + "\r\n";
+    return (buf); 
+}

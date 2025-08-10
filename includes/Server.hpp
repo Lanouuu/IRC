@@ -16,10 +16,13 @@
 # include "numerics.hpp"
 # include "Client.hpp"
 # include "Utils.hpp"
+# include "Channel.hpp"
 
 class Client;
+class Channel;
 
 typedef std::map<int, Client> client_map;
+typedef std::map<std::string, Channel> channel_map;
 
 class   Server
 {
@@ -52,6 +55,7 @@ class   Server
         sockaddr_in         _serverStruct;
         int                 _serverSocket;
         client_map          _clientsDB;
+        channel_map         _channelDB;
         std::string         _serverName;
         std::string         _serverNetwork;
         std::string         _serverVersion;
@@ -77,6 +81,10 @@ class   Server
         int                 PASS(Client &  client_temp, std::string & cmd, std::vector<std::string> & args);
         void                NICK(Client &  client_temp, std::vector<std::string> & args);
         void                USER(Client &  client_temp, std::string & cmd, std::vector<std::string> & args);
+        void                JOIN(Client & client_temp, std::vector<std::string> & args);
+
+        bool                ChannelExist(std::string const & name) const;
+        bool                isAlreadyOnTheChannel(std::string const & name, std::string const & nickname) const;
 };
   
 #endif

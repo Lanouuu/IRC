@@ -19,5 +19,10 @@ std::string ERR_NICKNAMEINUSE(const std::string & server, const std::string & ni
 std::string ERR_NEEDMOREPARAMS(const std::string & server, const std::string & nick, const std::string & command);
 std::string ERR_PASSWDMISMATCH(const std::string & server);
 std::string ERR_ALREADYREGISTERED(const std::string & server, const std::string & nick);
+std::string ERR_NOSUCHCHANNEL(const std::string & server, const std::string & nick, const std::string & arg);
+std::string ERR_BADCHANMASK(const std::string & server, const std::string & nick, const std::string & arg);
+std::string ERR_USERONCHANNEL(const std::string & server, const std::string & nick, const std::string & arg);
+std::string ERR_INVITEONLYCHAN(const std::string & server, const std::string & nick, const std::string & arg);
+std::string ERR_BADCHANNELKEY(const std::string & server, const std::string & nick, const std::string & arg);
 
 #endif

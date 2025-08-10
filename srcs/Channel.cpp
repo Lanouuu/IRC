@@ -48,7 +48,7 @@ size_t const &      Channel::getLimit() const
     return _limit;
 }
 
-bool const &        Channel::getInvitationMode() const
+bool const & Channel::isInviteOnly() const
 {
     return _inviteOnlyIsSet;
 }
@@ -58,7 +58,7 @@ bool const &        Channel::getTopicMode() const
     return _topicRestrictionIsSet;
 }
 
-bool const &        Channel::getPasswordMode() const
+bool const &        Channel::passwordIsSet() const
 {
     return _passwordIsSet;
 }
@@ -68,10 +68,20 @@ bool const &        Channel::getLimitMode() const
     return _limitIsSet;
 }
 
+std::map<std::string, Client> const & Channel::getMembers() const
+{
+    return _members; 
+}
+
 void    Channel::broadcast(std::string const & message)
 {
     for (std::map<std::string, Client>::iterator it = _members.begin(); it != _members.end(); it++)
     {
         it->second.getBufOUT() = message;
     }
+}
+
+void    Channel::addMember(Client & client)
+{
+    _members.insert(std::pair<std::string, Client>(client.getClientNickname(), client));
 }

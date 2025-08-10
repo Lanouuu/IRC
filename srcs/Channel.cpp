@@ -68,10 +68,10 @@ bool const &        Channel::getLimitMode() const
     return _limitIsSet;
 }
 
-void    Channel::broadcast(std::string const & message) const
+void    Channel::broadcast(std::string const & message)
 {
-    for (std::map<std::string, Client>::const_iterator it = _members.begin(); it != _members.end(); it++)
+    for (std::map<std::string, Client>::iterator it = _members.begin(); it != _members.end(); it++)
     {
-        send(it->second.getSocket(), message.c_str(), message.size(), 0);
+        it->second.getBufOUT() = message;
     }
 }

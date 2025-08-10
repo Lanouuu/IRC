@@ -25,7 +25,7 @@ class   Channel
         bool const &        getPasswordMode() const;
         bool const &        getLimitMode() const;
 
-        void                broadcast(std::string const & message) const;
+        void                broadcast(std::string const & message);
         
     private:
         std::map<std::string, Client>   _members;

@@ -388,6 +388,8 @@ int    Server::execCMD(Client & client_temp, std::string & req)
         NICK(client_temp, args);
     else if (cmd == "USER")
         USER(client_temp, cmd, args);
+    else if (cmd == "JOIN")
+        JOIN(client_temp, args);
     else if (cmd == "PING")
         PONG(client_temp, args);
     else if (cmd == "MODE")
@@ -420,6 +422,22 @@ void    Server::parseCMD(std::string & req, std::string & cmd, std::vector<std::
 /*********Commands IRC*********/
 
 
+bool    Server::ChannelExist(std::string const & name) const
+{
+    if (_channelDB.find(name) == _channelDB.end())
+        return false;
+    return true;
+}
+
+bool    Server::isAlreadyOnTheChannel(std::string const & name, std::string const & nickname) const
+{
+    std::map<std::string, Client>::const_iterator it;
+
+    it = _channelDB.at(name).getMembers().find(nickname);
+    if (it == _channelDB.at(name).getMembers().end())
+        return false;
+    return true;
+}
 
 int    Server::PASS(Client &  client_temp, std::string & cmd, std::vector<std::string> & args)
 {
@@ -534,8 +552,75 @@ void    Server::PONG(Client &  client_temp, std::vector<std::string> & args)
     return ;
 }
 
+static int  ParseChannelName(std::string const & name)
+{
+    if(name.find_first_of(" ,\a") != std::string::npos)
+        return 1;
+    return 0;
+}
+
+static void createChannel(channel_map & channelDB, Client & client, std::string const & name)
+{
+    (void)client;
+    channelDB.insert(std::pair<std::string, Channel>(name, Channel()));
+}
 
 
+static int parseJoinCommand(Server const & server, Client & client, std::vector<std::string> & args)
+{
+    if (args.size() == 0)
+    {
+        client.getBufOUT() = ERR_NEEDMOREPARAMS(server.getServerName(), client.getClientNickname(), args[0]);
+        return 1;
+    }
+    if (args[0][0] != '#')
+    {
+        client.getBufOUT() = ERR_NOSUCHCHANNEL(server.getServerName(), client.getClientNickname(), args[0]);
+        return 1;
+    }
+    if (ParseChannelName(args[0]) == 1)
+    {
+        client.getBufOUT() = ERR_BADCHANMASK(server.getServerName(), client.getClientNickname(), args[0]);
+        return 1;
+    }
+    return 0;
+}
+
+void    Server::JOIN(Client & client_temp, std::vector<std::string> & args)
+{
+    std::cout << BLUE "JOIN COMMAND" END << std::endl;
+    if (parseJoinCommand(*this, client_temp, args) == 1)
+        return ;
+    if (ChannelExist(args[0]))
+    {
+        if (isAlreadyOnTheChannel(args[0], client_temp.getClientNickname()))
+            client_temp.getBufOUT() = ERR_USERONCHANNEL(_serverName, client_temp.getClientNickname(), args[0]);
+        else if (_channelDB.at(args[0]).isInviteOnly())
+            client_temp.getBufOUT() = ERR_INVITEONLYCHAN(_serverName, client_temp.getClientNickname(), args[0]);
+        else
+        {
+            if (_channelDB.at(args[0]).passwordIsSet())
+            {
+                if (args.size() < 2)
+                    client_temp.getBufOUT() = ERR_BADCHANNELKEY(_serverName, client_temp.getClientNickname(), args[0]);
+                else
+                {
+                    if (args[1] == _channelDB.at(args[0]).getPassword())
+                        _channelDB.at(args[0]).addMember(client_temp);
+                    else
+                        client_temp.getBufOUT() = ERR_PASSWDMISMATCH(_serverName);
+                }
+            }
+            else
+                _channelDB.at(args[0]).addMember(client_temp);
+        }
+        return ;
+    }
+    std::cout << BLUE "CREATING CHANNEL" END << std::endl;
+    createChannel(_channelDB, client_temp, args[0]);
+    _channelDB.at(args[0]).addMember(client_temp);
+
+}
 /*********Print Clients list*********/
 
 

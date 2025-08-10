@@ -567,6 +567,7 @@ void    Server::PONG(Client &  client_temp, std::vector<std::string> & args)
 
 static int  ParseChannelName(std::string const & name)
 {
+    std::cout << RED << "NAME = " << name << END << std::endl;
     if(name.find_first_of(" ,\a") != std::string::npos)
         return 1;
     return 0;
@@ -593,7 +594,8 @@ static int parseJoinCommand(Server const & server, Client & client, std::vector<
     }
     if (ParseChannelName(args[0]) == 1)
     {
-        client.getBufOUT() = ERR_BADCHANMASK(server.getServerName(), client.getClientNickname(), args[0]);
+        std::cout << RED << "ARG = " << args[0] << END << std::endl;
+        client.getBufOUT() = ERR_BADCHANMASK(server.getServerName(), client.getClientNickname(), args[0]) + client.getClientNickname() + "!" + client.getClientUsername() + "@localhost " + "PART " + args[0] + " :bye" + "\r\n";
         return 1;
     }
     return 0;

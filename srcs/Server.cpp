@@ -388,6 +388,8 @@ int    Server::execCMD(Client & client_temp, std::string & req)
         NICK(client_temp, args);
     else if (cmd == "USER")
         USER(client_temp, cmd, args);
+    else if (cmd == "QUIT")
+        QUIT(client_temp);
     else if (cmd == "PING")
         PONG(client_temp, args);
     else if (cmd == "MODE")
@@ -515,6 +517,17 @@ void    Server::USER(Client &  client_temp, std::string & cmd, std::vector<std::
         realname = "Unknown";
     client_temp.setClientRealName(realname);
     client_temp.getNbCmd()++;
+    return ;
+}
+
+void    Server::QUIT(Client & client_temp)
+{
+    if (!client_temp.getIsConnected())
+    {
+        client_temp.getBufOUT() = ERR_NOTREGISTERED(_serverName, client_temp.getClientNickname());
+        return ;
+    }
+    client_temp.getDisconnectClient() = true;
     return ;
 }
 

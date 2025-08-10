@@ -77,6 +77,7 @@ class   Server
         int                 PASS(Client &  client_temp, std::string & cmd, std::vector<std::string> & args);
         void                NICK(Client &  client_temp, std::vector<std::string> & args);
         void                USER(Client &  client_temp, std::string & cmd, std::vector<std::string> & args);
+        void                QUIT(Client & client_temp);
         void                PONG(Client &  client_temp, std::vector<std::string> & args);
 };
   

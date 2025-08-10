@@ -19,5 +19,9 @@ std::string ERR_NICKNAMEINUSE(const std::string & server, const std::string & ni
 std::string ERR_NEEDMOREPARAMS(const std::string & server, const std::string & nick, const std::string & command);
 std::string ERR_PASSWDMISMATCH(const std::string & server);
 std::string ERR_ALREADYREGISTERED(const std::string & server, const std::string & nick);
+std::string ERR_UNKNOWNERROR(const std::string & server, const std::string & nick, const std::string cmd, const std::string & info);
+std::string ERR_UNKNOWNCOMMAND(const std::string & server, const std::string & nick, const std::string & cmd);
+std::string ERR_NOORIGIN(const std::string & server, const std::string & nick);
+std::string ERR_NOTREGISTERED(const std::string & server, const std::string & nick);
 
 #endif

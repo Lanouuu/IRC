@@ -101,3 +101,45 @@ std::string ERR_ALREADYREGISTERED(const std::string & server, const std::string 
         buf = ":" + server + " 462 " + nick + " :You may not reregister" + "\r\n";
     return (buf);
 }
+
+std::string ERR_UNKNOWNERROR(const std::string & server, const std::string & nick, const std::string cmd, const std::string & info)
+{
+    std::string buf;
+    if (cmd.empty() && nick.empty())
+        buf = ":" + server + " 400 " + "* " + "* " + ":" + info + "\r\n";
+    else if (nick.empty())
+        buf = ":" + server + " 400 " + "* " + cmd + " " + ":" + info + "\r\n";
+    else if (cmd.empty())
+        buf = ":" + server + " 400 " + nick + " " + "* " + ":" + info + "\r\n";
+    return (buf);
+}
+
+std::string ERR_UNKNOWNCOMMAND(const std::string & server, const std::string & nick, const std::string & cmd)
+{
+    std::string buf;
+    if (nick.empty())
+        buf = ":" + server + " 421 " + "* " + cmd + " :Unknown command" + "\r\n";
+    else
+        buf = buf = ":" + server + " 421 " + nick + " " + cmd + " :Unknown command" + "\r\n";
+    return (buf);
+}
+
+std::string ERR_NOORIGIN(const std::string & server, const std::string & nick)
+{
+    std::string buf;
+    if (nick.empty())
+        buf = ":" + server + " 409 " + "*" + " :No origin specified" + "\r\n";
+    else
+        buf = ":" + server + " 409 " + nick + " :No origin specified" + "\r\n";
+    return (buf);
+}
+
+std::string ERR_NOTREGISTERED(const std::string & server, const std::string & nick)
+{
+    std::string buf;
+    if (nick.empty())
+        buf = ":" + server + " 451 " + "*" + " :You have not registered" + "\r\n";
+    else
+        buf = buf = ":" + server + " 451 " + nick + " :You have not registered" + "\r\n";
+    return (buf);
+}

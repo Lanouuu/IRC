@@ -85,7 +85,7 @@ std::string Server::getServerName(void) const
 
 
 
-/*********Parsing Server Arguments*********/
+/********* Parsing Server Arguments *********/
 
 
 
@@ -158,7 +158,7 @@ void    Server::passwordErr(char c)
 
 
 
-/*********Launching Server*********/
+/********* Launching Server *********/
 
 
 
@@ -254,7 +254,7 @@ void    Server::clearServer(void)
 
 
 
-/*********Adding Client*********/
+/********* Adding Client *********/
 
 
 
@@ -319,7 +319,7 @@ void    Server::checkDisconnectClient(Client & client_temp)
 
 
 
-/*********Reading Client*********/
+/********* Reading Client *********/
 
 
 
@@ -361,7 +361,7 @@ void    Server::bytesReceived(Client & client_temp, std::string & buf)
 
 
 
-/*********Execute Commands*********/
+/********* Execute Commands *********/
 
 
 
@@ -420,8 +420,8 @@ void    Server::parseCMD(std::string & req, std::string & cmd, std::vector<std::
 
 
 
+/********* Channels Utils *********/
 
-/*********Commands IRC*********/
 
 
 bool    Server::ChannelExist(std::string const & name) const
@@ -440,6 +440,30 @@ bool    Server::isAlreadyOnTheChannel(std::string const & name, std::string cons
         return false;
     return true;
 }
+
+
+
+/*********Print Clients list*********/
+
+
+
+void Server::printClientsList(void) const 
+{
+    std::cout << "List of clients in server " << this->_serverName << " :" << std::endl;
+    for(std::map<int, Client>::const_iterator it = this->getClientsDB().begin(); it != this->getClientsDB().end(); it++)
+        std::cout << "[" <<it->second.getClientNickname() << "]" << std::endl;
+    std::cout << std::endl;
+    return ;
+}
+
+
+/****************************************************************************/
+/*                              Commands IRC                                */
+/****************************************************************************/
+
+
+/********* PASS *********/
+
 
 int    Server::PASS(Client &  client_temp, std::string & cmd, std::vector<std::string> & args)
 {
@@ -464,6 +488,10 @@ int    Server::PASS(Client &  client_temp, std::string & cmd, std::vector<std::s
     client_temp.getNbCmd()++;
     return (0);
 }
+
+
+/********* NICK *********/
+
 
 static int checkNickFormat(std::string & nick)
 {
@@ -498,9 +526,12 @@ void    Server::NICK(Client &  client_temp, std::vector<std::string> & args)
         }
     }
     client_temp.setClientNickname(args[0]);
-    client_temp.getNbCmd()++;
     return ;
 }
+
+
+/********* USER *********/
+
 
 void    Server::USER(Client &  client_temp, std::string & cmd, std::vector<std::string> & args)
 {
@@ -534,9 +565,12 @@ void    Server::USER(Client &  client_temp, std::string & cmd, std::vector<std::
     if (realname.empty())
         realname = "Unknown";
     client_temp.setClientRealName(realname);
-    client_temp.getNbCmd()++;
     return ;
 }
+
+
+/********* QUIT *********/
+
 
 void    Server::QUIT(Client & client_temp)
 {
@@ -548,6 +582,10 @@ void    Server::QUIT(Client & client_temp)
     client_temp.getDisconnectClient() = true;
     return ;
 }
+
+
+/********* PONG *********/
+
 
 void    Server::PONG(Client &  client_temp, std::vector<std::string> & args)
 {
@@ -564,6 +602,10 @@ void    Server::PONG(Client &  client_temp, std::vector<std::string> & args)
     client_temp.getBufOUT() = "PONG " + args[0] + "\r\n";
     return ;
 }
+
+
+/********* JOIN *********/
+
 
 static int  ParseChannelName(std::string const & name)
 {
@@ -635,16 +677,4 @@ void    Server::JOIN(Client & client_temp, std::vector<std::string> & args)
     createChannel(_channelDB, client_temp, args[0]);
     _channelDB.at(args[0]).addMember(client_temp);
 
-}
-/*********Print Clients list*********/
-
-
-
-void Server::printClientsList(void) const 
-{
-    std::cout << "List of clients in server " << this->_serverName << " :" << std::endl;
-    for(std::map<int, Client>::const_iterator it = this->getClientsDB().begin(); it != this->getClientsDB().end(); it++)
-        std::cout << "[" <<it->second.getClientNickname() << "]" << std::endl;
-    std::cout << std::endl;
-    return ;
 }

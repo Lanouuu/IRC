@@ -60,6 +60,27 @@ std::string MY_RPL_TOPIC(const std::string & server, const std::string & nick, c
     return (buf); 
 }
 
+
+std::string RPL_NAMREPLY(const std::string & server, const std::string & nick, const std::string & arg, std::map<std::string, Client> const & members)
+{
+    std::string buf;
+    
+    buf = ":" + server + " 353 " + nick + " = " + arg + " :";
+    for (std::map<std::string, Client>::const_iterator it = members.begin(); it != members.end(); it++)
+    {
+        buf += it->first + " ";
+    }
+    buf += "\r\n";
+    return (buf); 
+}
+
+std::string RPL_ENDOFNAMES(const std::string & server, const std::string & nick, const std::string & arg)
+{
+    std::string buf;
+    
+    buf = ":" + server + " 366 " + nick + " " + arg + " :End of /NAMES list" + "\r\n";
+    return (buf);  
+}
 std::string ERR_CHANOPRIVSNEEDED(const std::string & server, const std::string & nick, const std::string & arg)
 {
     std::string buf = ":" + server + " 482 " + nick + " " + arg + " :You're not channel operator" + "\r\n";
@@ -220,3 +241,4 @@ std::string ERR_NOTONCHANNEL(const std::string & server, const std::string & nic
     buf = ":" + server + " 442 " + nick + " " + arg + "<client> <channel> :You're not on that channel" + "\r\n";
     return (buf); 
 }
+

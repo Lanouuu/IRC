@@ -73,6 +73,20 @@ std::map<std::string, Client> const & Channel::getMembers() const
     return _members; 
 }
 
+std::vector<std::string> const & Channel::getOperators() const
+{
+    return _operators;
+}
+
+bool    Channel::isOperator(const std::string nick) const
+{
+    std::vector<std::string>::const_iterator it = std::find(_operators.begin(), _operators.end(), nick);
+    if(it != _operators.end())
+        return true;
+    else
+        return false;
+}
+
 void    Channel::broadcast(std::string const & message)
 {
     for (std::map<std::string, Client>::iterator it = _members.begin(); it != _members.end(); it++)

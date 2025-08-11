@@ -11,6 +11,12 @@ std::string RPL_CREATED(const std::string & server, const std::string & nick, co
 std::string RPL_MYINFO(const std::string & server, const std::string & nick, const std::string & version);
 std::string RPL_ISUPPORT(const std::string & server, const std::string & nick);
 
+std::string RPL_NOTOPIC(const std::string & server, const std::string & nick, const std::string & arg);
+std::string RPL_TOPIC(const std::string & server, const std::string & nick, const std::string & chan, const std::string & arg);
+std::string RPL_TOPICWHOTIME(const std::string & server, const std::string & nick, const std::string & chan, const std::string & arg);
+
+std::string MY_RPL_TOPIC(const std::string & server, const std::string & nick, const std::string & user, const std::string & chan, const std::string & arg);
+
 /********* ERR Numerics *********/
 
 std::string ERR_NONICKNAMEGIVEN(const std::string & server, const std::string & nick, const std::string & user);
@@ -28,5 +34,7 @@ std::string ERR_BADCHANMASK(const std::string & server, const std::string & nick
 std::string ERR_USERONCHANNEL(const std::string & server, const std::string & nick, const std::string & arg);
 std::string ERR_INVITEONLYCHAN(const std::string & server, const std::string & nick, const std::string & arg);
 std::string ERR_BADCHANNELKEY(const std::string & server, const std::string & nick, const std::string & arg);
+std::string ERR_NOTONCHANNEL(const std::string & server, const std::string & nick, const std::string & arg);
+std::string ERR_CHANOPRIVSNEEDED(const std::string & server, const std::string & nick, const std::string & arg);
 
 #endif

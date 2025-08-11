@@ -73,6 +73,11 @@ const client_map    &Server::getClientsDB(void) const
     return (this->_clientsDB);
 }
 
+const channel_map    &Server::getChannelDB(void) const
+{
+    return (this->_channelDB);
+}
+
 std::string Server::getServerName(void) const
 {
     return (this->_serverName);
@@ -394,6 +399,8 @@ int    Server::execCMD(Client & client_temp, std::string & req)
         JOIN(client_temp, args);
     else if (cmd == "PING")
         PONG(client_temp, args);
+    else if (cmd == "TOPIC")
+        TOPIC(client_temp, args);
     else if (cmd == "MODE")
         return (0);
     else
@@ -677,4 +684,77 @@ void    Server::JOIN(Client & client_temp, std::vector<std::string> & args)
     createChannel(_channelDB, client_temp, args[0]);
     _channelDB.at(args[0]).addMember(client_temp);
 
+}
+
+/********* TOPIC *********/
+
+void Server::TOPIC(Client &  client_temp, std::vector<std::string> & args) {
+    std::cout << BLUE "TOPIC COMMAND" END << std::endl;
+
+    if(args.empty())
+    {
+        std::cout << "ici 696" << std::endl;
+        client_temp.getBufOUT() = ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), client_temp.getClientUsername());
+        return;
+    }
+    if(ChannelExist(args[0])) {
+        if (args[0][0] != '#')
+        {
+            client_temp.getBufOUT() = ERR_NOSUCHCHANNEL(_serverName, client_temp.getClientNickname(), args[0]);
+            return;
+        }
+        if(!isAlreadyOnTheChannel(args[0], client_temp.getClientNickname()))
+        {
+            client_temp.getBufOUT() = ERR_NOTONCHANNEL(_serverName, client_temp.getClientNickname(), args[0]);
+            return;
+        }
+        if(args.size() == 1 && isAlreadyOnTheChannel(args[0], client_temp.getClientNickname()))
+        {
+            if(!this->_channelDB.at(args[0]).getTopic().empty())
+            {
+                std::cout << "ici 713" << std::endl;
+                client_temp.getBufOUT() = RPL_TOPIC(_serverName, client_temp.getClientNickname(), args[0], this->_channelDB.at(args[0]).getTopic());
+                return;
+            }
+            else
+            {
+                std::cout << "ici 721" << std::endl;
+                client_temp.getBufOUT() = RPL_NOTOPIC(_serverName, client_temp.getClientNickname(), args[0]);
+                return;
+            }
+        }
+        if(args.size() > 1 && !args[1].empty())
+        {
+            std::cout << "ici 728" << std::endl;
+            //setting topic
+            if(this->_channelDB.at(args[0]).isOperator(client_temp.getClientNickname()) == true)
+            {
+                this->_channelDB.at(args[0]).setTopic(args[1]);
+                this->_channelDB.at(args[0]).broadcast(MY_RPL_TOPIC(_serverName, client_temp.getClientNickname(), client_temp.getClientUsername(), args[0], this->_channelDB.at(args[0]).getTopic()));
+                return;
+            }
+            else
+            {
+                client_temp.getBufOUT() = ERR_CHANOPRIVSNEEDED(_serverName, client_temp.getClientNickname(), args[0]);
+                return;
+            }
+        }
+        if(args.size() > 1 && args[1] == ":")
+        {
+            std::cout << "ici 733" << std::endl;
+            //unsetting topic
+            if(this->_channelDB.at(args[0]).isOperator(client_temp.getClientNickname()) == true)
+            {
+                this->_channelDB.at(args[0]).setTopic("");
+                this->_channelDB.at(args[0]).broadcast(MY_RPL_TOPIC(_serverName, client_temp.getClientNickname(), client_temp.getClientUsername(), args[0], this->_channelDB.at(args[0]).getTopic())); 
+            }
+            else
+                client_temp.getBufOUT() = ERR_CHANOPRIVSNEEDED(_serverName, client_temp.getClientNickname(), args[0]);
+        }
+    }
+    else
+    {
+        std::cout << "ici 746" << std::endl;
+        client_temp.getBufOUT() = ERR_NOSUCHCHANNEL(_serverName, client_temp.getClientNickname(), args[0]);
+    }
 }

@@ -36,6 +36,7 @@ class   Server
         int                 getSocket(void) const;
         client_map &        getClientsDB(void);
         const client_map &  getClientsDB(void) const;
+        const channel_map & getChannelDB(void) const;
         std::string         getServerName(void) const;
         
         void                serverListen(void);
@@ -84,6 +85,7 @@ class   Server
         void                QUIT(Client & client_temp);
         void                PONG(Client &  client_temp, std::vector<std::string> & args);
         void                JOIN(Client & client_temp, std::vector<std::string> & args);
+        void                TOPIC(Client &  client_temp, std::vector<std::string> & args);
 
         bool                ChannelExist(std::string const & name) const;
         bool                isAlreadyOnTheChannel(std::string const & name, std::string const & nickname) const;

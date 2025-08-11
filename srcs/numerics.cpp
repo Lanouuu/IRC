@@ -36,6 +36,35 @@ std::string RPL_ISUPPORT(const std::string & server, const std::string & nick)
     return (buf);
 }
 
+std::string RPL_NOTOPIC(const std::string & server, const std::string & nick, const std::string & arg)
+{
+    std::string buf = ":" + server + " 331 " + nick + " " + arg + " :No topic is set" + "\r\n";
+    return (buf); 
+}
+
+std::string RPL_TOPIC(const std::string & server, const std::string & nick, const std::string & chan, const std::string & arg)
+{
+    std::string buf = ":" + server + " 332 " + nick + " " + chan + " :" + arg + "\r\n";
+    return (buf); 
+}
+
+std::string RPL_TOPICWHOTIME(const std::string & server, const std::string & nick, const std::string & chan, const std::string & arg)
+{
+    std::string buf = ":" + server + " 333 " + nick + " " + chan + " :" + arg + "\r\n";
+    return (buf); 
+}
+
+std::string MY_RPL_TOPIC(const std::string & server, const std::string & nick, const std::string & user, const std::string & chan, const std::string & arg)
+{
+    std::string buf = ":" + nick + "!" + user + "@" + server + " TOPIC " + chan + " :" + arg + "\r\n";
+    return (buf); 
+}
+
+std::string ERR_CHANOPRIVSNEEDED(const std::string & server, const std::string & nick, const std::string & arg)
+{
+    std::string buf = ":" + server + " 482 " + nick + " " + arg + " :You're not channel operator" + "\r\n";
+    return (buf); 
+}
 
 /****************************************************************************/
 /*                              ERR Numerics                                */
@@ -181,5 +210,13 @@ std::string ERR_BADCHANNELKEY(const std::string & server, const std::string & ni
     std::string buf;
     
     buf = ":" + server + " 475 " + nick + " " + arg + " :Cannot join channel (+k)" + "\r\n";
+    return (buf); 
+}
+
+std::string ERR_NOTONCHANNEL(const std::string & server, const std::string & nick, const std::string & arg)
+{
+    std::string buf;
+    
+    buf = ":" + server + " 442 " + nick + " " + arg + "<client> <channel> :You're not on that channel" + "\r\n";
     return (buf); 
 }

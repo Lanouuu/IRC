@@ -4,6 +4,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <algorithm>
 #include "Client.hpp"
 
 class Client;
@@ -27,6 +28,8 @@ class   Channel
         bool const &        passwordIsSet() const;
         bool const &        getLimitMode() const;
         std::map<std::string, Client> const & getMembers() const;
+        std::vector<std::string> const & getOperators() const;
+        bool                isOperator(const std::string nick) const;
 
         void                broadcast(std::string const & message);
         void                addMember(Client & client);

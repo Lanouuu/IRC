@@ -6,7 +6,7 @@
 /****************************************************************************/
 
 
-Client::Client() 
+Client::Client(void) 
     : _clientSocket(-1),
     _clientNbCmd(0),
     _disconnectClient(false),
@@ -29,7 +29,7 @@ Client::Client(const Client & src)
     return ;
 }
 
-Client::~Client() 
+Client::~Client(void) 
 {
     return ;
 }
@@ -161,13 +161,3 @@ void    Client::setDisconnectClient(bool disconnect_client)
 /*                           Members Functions                              */
 /****************************************************************************/
 
-
-// return FD of the client to send, ajouter le send pour un channel
-int Client::getFDtoSend(std::string nickName, Server &ircserver) {
-    for(std::map<int, Client>::const_iterator it = ircserver.getClientsDB().begin(); it != ircserver.getClientsDB().end(); it++)
-    {
-        if(it->second.getClientNickname() == nickName)
-            return it->first;
-    }
-    return 0;
-}

@@ -3,7 +3,7 @@
 
 # include <iostream>
 
-/*********RPL Numerics*********/
+/********* RPL Numerics *********/
 
 std::string RPL_WELCOME(const std::string & server, const std::string & nick, const std::string & network);
 std::string RPL_YOURHOST(const std::string & server, const std::string & nick, const std::string & version);
@@ -11,7 +11,7 @@ std::string RPL_CREATED(const std::string & server, const std::string & nick, co
 std::string RPL_MYINFO(const std::string & server, const std::string & nick, const std::string & version);
 std::string RPL_ISUPPORT(const std::string & server, const std::string & nick);
 
-/*********ERR Numerics*********/
+/********* ERR Numerics *********/
 
 std::string ERR_NONICKNAMEGIVEN(const std::string & server, const std::string & nick, const std::string & user);
 std::string ERR_ERRONEUSNICKNAME(const std::string & server, const std::string & nick, const std::string & user);

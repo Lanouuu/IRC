@@ -9,14 +9,13 @@ class   Client
 {
     public:
         
-        Client();
+        Client(void);
         Client(const Client & src);
-        ~Client();
+        ~Client(void);
 
         Client &                operator=(const Client & rhs);
 
         std::string             getClientNickname() const;
-        int                     getFDtoSend(std::string nickName, Server &ircserver);
         int const &             getSocket() const;
         std::string             getClientRealname();
         std::string             getClientUsername();

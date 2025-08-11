@@ -13,6 +13,7 @@ Channel::~Channel()
 void    Channel::setPassword(std::string const & password)
 {
     _password = password;
+    _passwordIsSet = true;
 }
 
 void    Channel::setTopic(std::string const & topic)
@@ -33,6 +34,11 @@ void    Channel::setInvitation(std::string const & mode)
         _inviteOnlyIsSet = false;
 }
 
+void    Channel::setName(std::string const & name)
+{
+    _name = name;
+}
+
 std::string const & Channel::getPassword() const
 {
     return _password;
@@ -48,12 +54,17 @@ size_t const &      Channel::getLimit() const
     return _limit;
 }
 
+std::string const & Channel::getName() const
+{
+    return _name;
+}
+
 bool const & Channel::isInviteOnly() const
 {
     return _inviteOnlyIsSet;
 }
 
-bool const &        Channel::getTopicMode() const
+bool const &        Channel::topicIsSet() const
 {
     return _topicRestrictionIsSet;
 }
@@ -77,11 +88,13 @@ void    Channel::broadcast(std::string const & message)
 {
     for (std::map<std::string, Client>::iterator it = _members.begin(); it != _members.end(); it++)
     {
-        it->second.getBufOUT() = message;
+        it->second.getBufOUT() += message;
     }
 }
 
-void    Channel::addMember(Client & client)
+void    Channel::addMember(Client & client, std::string const & name)
 {
     _members.insert(std::pair<std::string, Client>(client.getClientNickname(), client));
+    broadcast(":" + client.getClientNickname() + "!" + client.getClientUsername() + "@localhost JOIN :" + name + "\r\n");
+
 }

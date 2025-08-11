@@ -73,6 +73,7 @@ class   Server
         int                 setClient(Client & client, int const & socket_fd);
         void                readClient(Client & client_temp, int socket_fd);
         void                connectionReply(Client & client_temp);
+        void                joinReply(Client & client, Channel const & channel);
         void                checkDisconnectClient(Client & client_temp);
         void                bytesReceived(Client & client_temp, std::string & buf);
         int                 execCMD(Client & client_temp, std::string & req);
@@ -83,7 +84,7 @@ class   Server
         void                USER(Client &  client_temp, std::string & cmd, std::vector<std::string> & args);
         void                QUIT(Client & client_temp);
         void                PONG(Client &  client_temp, std::vector<std::string> & args);
-        void                JOIN(Client & client_temp, std::vector<std::string> & args);
+        void                JOIN(Client & client_temp, std::vector<std::string> & args, std::string const & cmd);
 
         bool                ChannelExist(std::string const & name) const;
         bool                isAlreadyOnTheChannel(std::string const & name, std::string const & nickname) const;

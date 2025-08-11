@@ -183,3 +183,41 @@ std::string ERR_BADCHANNELKEY(const std::string & server, const std::string & ni
     buf = ":" + server + " 475 " + nick + " " + arg + " :Cannot join channel (+k)" + "\r\n";
     return (buf); 
 }
+
+
+std::string RPL_NOTOPIC(const std::string & server, const std::string & nick, const std::string & arg)
+{
+    std::string buf;
+    
+    buf = ":" + server + " 331 " + nick + " " + arg + " :No topic is set" + "\r\n";
+    return (buf);   
+}
+
+std::string RPL_TOPIC(const std::string & server, const std::string & nick, const std::string & arg, const std::string & topic)
+{
+    std::string buf;
+    
+    buf = ":" + server + " 332 " + nick + " " + arg + " :" + topic + "\r\n";
+    return (buf); 
+}
+
+std::string RPL_NAMREPLY(const std::string & server, const std::string & nick, const std::string & arg, std::map<std::string, Client> const & members)
+{
+    std::string buf;
+    
+    buf = ":" + server + " 353 " + nick + " = " + arg + " :";
+    for (std::map<std::string, Client>::const_iterator it = members.begin(); it != members.end(); it++)
+    {
+        buf += it->first + " ";
+    }
+    buf += "\r\n";
+    return (buf); 
+}
+
+std::string RPL_ENDOFNAMES(const std::string & server, const std::string & nick, const std::string & arg)
+{
+    std::string buf;
+    
+    buf = ":" + server + " 366 " + nick + " " + arg + " :End of /NAMES list" + "\r\n";
+    return (buf);  
+}

@@ -2,6 +2,10 @@
 # define NUMERICS_HPP
 
 # include <iostream>
+# include <map>
+# include "Client.hpp"
+
+class Client;
 
 /********* RPL Numerics *********/
 
@@ -10,6 +14,10 @@ std::string RPL_YOURHOST(const std::string & server, const std::string & nick, c
 std::string RPL_CREATED(const std::string & server, const std::string & nick, const std::string & date);
 std::string RPL_MYINFO(const std::string & server, const std::string & nick, const std::string & version);
 std::string RPL_ISUPPORT(const std::string & server, const std::string & nick);
+std::string RPL_NOTOPIC(const std::string & server, const std::string & nick, const std::string & arg);
+std::string RPL_TOPIC(const std::string & server, const std::string & nick, const std::string & arg, const std::string & topic);
+std::string RPL_NAMREPLY(const std::string & server, const std::string & nick, const std::string & arg, std::map<std::string, Client> const & members);
+std::string RPL_ENDOFNAMES(const std::string & server, const std::string & nick, const std::string & arg);
 
 /********* ERR Numerics *********/
 
@@ -28,5 +36,4 @@ std::string ERR_BADCHANMASK(const std::string & server, const std::string & nick
 std::string ERR_USERONCHANNEL(const std::string & server, const std::string & nick, const std::string & arg);
 std::string ERR_INVITEONLYCHAN(const std::string & server, const std::string & nick, const std::string & arg);
 std::string ERR_BADCHANNELKEY(const std::string & server, const std::string & nick, const std::string & arg);
-
 #endif

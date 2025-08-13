@@ -183,7 +183,10 @@ void    Channel::broadcast(std::string const & message, Client & client)
     {
         it->second.getBufOUT() =":" + client.getClientNickname() + "!" + client.getClientUsername() + "@localhost JOIN :" + _name + "\r\n";
         if (send(it->second.getSocket(), it->second.getBufOUT().c_str(), it->second.getBufOUT().size(), 0) == -1)
+        {
             it->second.getDisconnectClient() = true;
+            std::cerr << RED "Error: broadcast send" END << std::endl;
+        }
         it->second.getBufOUT().clear();
     }
 }

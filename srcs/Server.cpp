@@ -239,7 +239,7 @@ void    Server::serverListen(void)
                         if (send(socket, client_temp.getBufOUT().c_str(), client_temp.getBufOUT().size(), 0) == -1);
                         {
                             client_temp.getDisconnectClient();
-                            std::cerr << RED "Error: send: disconnect client" END << std::endl;
+                            std::cerr << RED "Error: send" END << std::endl;
                         }
                         client_temp.getBufOUT().clear();
                     }

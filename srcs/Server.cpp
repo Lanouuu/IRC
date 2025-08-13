@@ -735,7 +735,7 @@ void    Server::JOIN(Client & client_temp, std::vector<std::string> & args, std:
                 }
             }
         }
-        std::cout << BLUE "CREATING CHANNEL " << it->first << " [PASSWORD]-> " << it->second << END << std::endl;
+        std::cout << BLUE "CREATING/JOINING CHANNEL " << it->first << " [PASSWORD]-> " << _channelDB.at(it->first).getName() << END << std::endl;
         joinChannel(client_temp, _channelDB.at(it->first));
         joinReply(client_temp, _channelDB.at(it->first)); 
     }

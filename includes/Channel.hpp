@@ -13,8 +13,9 @@ class   Channel
 {
     public:
         Channel();
+        Channel(Channel const & src);
         ~Channel();
-
+        Channel &           operator=(const Channel & rhs);
         void                setPassword(std::string const & password);
         void                setTopic(std::string const & topic);
         void                setLimit(size_t const & limit);
@@ -30,11 +31,12 @@ class   Channel
         bool const &        passwordIsSet() const;
         bool const &        getLimitMode() const;
         std::map<std::string, Client> const & getMembers() const;
+        std::map<std::string, Client> & getMembers();
         std::vector<std::string> const & getOperators() const;
         bool                isOperator(const std::string nick) const;
 
-        void                broadcast(std::string const & message);
-        void                addMember(Client & client, std::string const & name);
+        void                broadcast(std::string const & message, Client & client);
+        void                addMember(Client & client);
 
     private:
         std::map<std::string, Client>   _members;

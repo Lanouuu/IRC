@@ -622,12 +622,12 @@ static int  ParseChannelName(std::string const & name)
     return 0;
 }
 
-static void createChannel(channel_map & channelDB, Client & client, std::string const & name, std::string const & password)
+static void createChannel(channel_map & channelDB, std::string const & name, std::string const & password)
 {
-    (void)client;
     channelDB.insert(std::pair<std::string, Channel>(name, Channel()));
     if (!password.empty())
         channelDB.at(name).setPassword(password);
+    channelDB.at(name).setName(name);
 }
 
 
@@ -692,6 +692,13 @@ void    Server::joinReply(Client & client, Channel const & channel)
     return ;
 }
 
+static void joinChannel(Client & client, Channel & channel)
+{
+    std::string message = ":" + client.getClientNickname() + "!" + client.getClientUsername() + "@localhost JOIN :" + channel.getName() + "\r\n";
+    channel.addMember(client);
+    channel.broadcast(message, client);
+}
+
 void    Server::JOIN(Client & client_temp, std::vector<std::string> & args, std::string const & cmd)
 {
     std::vector<std::pair<std::string, std::string> > channels;
@@ -706,7 +713,9 @@ void    Server::JOIN(Client & client_temp, std::vector<std::string> & args, std:
     {
         if (parseJoinCommand(*this, client_temp, it->first) == 1)
             continue;
-        if (ChannelExist(it->first))
+        if (!ChannelExist(it->first))
+            createChannel(_channelDB, it->first, it->second);
+        else    
         {
             if (isAlreadyOnTheChannel(it->first, client_temp.getClientNickname()))
                 client_temp.getBufOUT() = ERR_USERONCHANNEL(_serverName, client_temp.getClientNickname(), it->first);
@@ -720,36 +729,15 @@ void    Server::JOIN(Client & client_temp, std::vector<std::string> & args, std:
                         client_temp.getBufOUT() = ERR_BADCHANNELKEY(_serverName, client_temp.getClientNickname(), it->first);
                     else
                     {
-                        if (it->second == _channelDB.at(it->first).getPassword())
-                        {
-                            _channelDB.at(it->first).addMember(client_temp, it->first);
-                            _channelDB.at(it->first).setName(it->first);
-                            client_temp.getBufOUT() = ":" + client_temp.getClientNickname() + "!" + client_temp.getClientUsername() + "@localhost JOIN :" + it->first + "\r\n";
-                            joinReply(client_temp, _channelDB.at(it->first)); 
-                        }
-                        else
+                        if (it->second != _channelDB.at(it->first).getPassword())
                             client_temp.getBufOUT() = ERR_PASSWDMISMATCH(_serverName);
                     }
                 }
-                else
-                {
-                    _channelDB.at(it->first).addMember(client_temp, it->first);
-                    _channelDB.at(it->first).setName(it->first);
-                    client_temp.getBufOUT() = ":" + client_temp.getClientNickname() + "!" + client_temp.getClientUsername() + "@localhost JOIN :" + it->first + "\r\n";
-                    joinReply(client_temp, _channelDB.at(it->first)); 
-                }
             }
-            return ;
         }
-        else
-        {
-            std::cout << BLUE "CREATING CHANNEL " << it->first << " [PASSWORD]-> " << it->second << END << std::endl;
-            createChannel(_channelDB, client_temp, it->first, it->second);
-            _channelDB.at(it->first).addMember(client_temp, it->first);
-            _channelDB.at(it->first).setName(it->first);
-            client_temp.getBufOUT() = ":" + client_temp.getClientNickname() + "!" + client_temp.getClientUsername() + "@localhost JOIN :" + it->first + "\r\n";
-            joinReply(client_temp, _channelDB.at(it->first)); 
-        }
+        std::cout << BLUE "CREATING CHANNEL " << it->first << " [PASSWORD]-> " << it->second << END << std::endl;
+        joinChannel(client_temp, _channelDB.at(it->first));
+        joinReply(client_temp, _channelDB.at(it->first)); 
     }
 
 }
@@ -798,7 +786,7 @@ void Server::TOPIC(Client &  client_temp, std::vector<std::string> & args) {
             if(this->_channelDB.at(args[0]).isOperator(client_temp.getClientNickname()) == true)
             {
                 this->_channelDB.at(args[0]).setTopic(args[1]);
-                this->_channelDB.at(args[0]).broadcast(MY_RPL_TOPIC(_serverName, client_temp.getClientNickname(), client_temp.getClientUsername(), args[0], this->_channelDB.at(args[0]).getTopic()));
+                this->_channelDB.at(args[0]).broadcast(MY_RPL_TOPIC(_serverName, client_temp.getClientNickname(), client_temp.getClientUsername(), args[0], this->_channelDB.at(args[0]).getTopic()), client_temp);
                 return;
             }
             else
@@ -814,7 +802,7 @@ void Server::TOPIC(Client &  client_temp, std::vector<std::string> & args) {
             if(this->_channelDB.at(args[0]).isOperator(client_temp.getClientNickname()) == true)
             {
                 this->_channelDB.at(args[0]).setTopic("");
-                this->_channelDB.at(args[0]).broadcast(MY_RPL_TOPIC(_serverName, client_temp.getClientNickname(), client_temp.getClientUsername(), args[0], this->_channelDB.at(args[0]).getTopic())); 
+                this->_channelDB.at(args[0]).broadcast(MY_RPL_TOPIC(_serverName, client_temp.getClientNickname(), client_temp.getClientUsername(), args[0], this->_channelDB.at(args[0]).getTopic()), client_temp); 
             }
             else
                 client_temp.getBufOUT() = ERR_CHANOPRIVSNEEDED(_serverName, client_temp.getClientNickname(), args[0]);

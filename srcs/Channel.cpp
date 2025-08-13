@@ -5,9 +5,29 @@ Channel::Channel(): _limit(0), _inviteOnlyIsSet(false), _topicRestrictionIsSet(f
 
 }
 
+
+Channel::Channel(Channel const & src)
+{
+    *this = src;
+}
+
+Channel &   Channel::operator=(const Channel & rhs)
+{
+    _members = rhs._members;
+    _operators = rhs._operators;
+    _password =  rhs._password;
+    _topic = rhs._topic;
+    _limit = rhs._limit;
+    _name = rhs._name;
+    _inviteOnlyIsSet = rhs._inviteOnlyIsSet;
+    _topicRestrictionIsSet = rhs._topicRestrictionIsSet;
+    _passwordIsSet = rhs._passwordIsSet;
+    _limitIsSet = rhs._limitIsSet;
+    return *this;
+}
+
 Channel::~Channel()
 {
-
 }
 
 void    Channel::setPassword(std::string const & password)
@@ -84,6 +104,11 @@ std::map<std::string, Client> const & Channel::getMembers() const
     return _members; 
 }
 
+std::map<std::string, Client> & Channel::getMembers()
+{
+    return _members; 
+}
+
 std::vector<std::string> const & Channel::getOperators() const
 {
     return _operators;
@@ -98,17 +123,17 @@ bool    Channel::isOperator(const std::string nick) const
         return false;
 }
 
-void    Channel::broadcast(std::string const & message)
+void    Channel::broadcast(std::string const & message, Client & client)
 {
     for (std::map<std::string, Client>::iterator it = _members.begin(); it != _members.end(); it++)
     {
-        it->second.getBufOUT() += message;
+        it->second.getBufOUT() =":" + client.getClientNickname() + "!" + client.getClientUsername() + "@localhost JOIN :" + _name + "\r\n";
+        send(it->second.getSocket(), it->second.getBufOUT().c_str(), it->second.getBufOUT().size(), 0);
+        it->second.getBufOUT().clear();
     }
 }
 
-void    Channel::addMember(Client & client, std::string const & name)
+void    Channel::addMember(Client & client)
 {
     _members.insert(std::pair<std::string, Client>(client.getClientNickname(), client));
-    broadcast(":" + client.getClientNickname() + "!" + client.getClientUsername() + "@localhost JOIN :" + name + "\r\n");
-
 }

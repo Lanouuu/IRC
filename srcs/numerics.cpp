@@ -60,7 +60,6 @@ std::string MY_RPL_TOPIC(const std::string & server, const std::string & nick, c
     return (buf); 
 }
 
-
 std::string RPL_NAMREPLY(const std::string & server, const std::string & nick, const std::string & arg, std::map<std::string, Client> const & members)
 {
     std::string buf;
@@ -81,11 +80,7 @@ std::string RPL_ENDOFNAMES(const std::string & server, const std::string & nick,
     buf = ":" + server + " 366 " + nick + " " + arg + " :End of /NAMES list" + "\r\n";
     return (buf);  
 }
-std::string ERR_CHANOPRIVSNEEDED(const std::string & server, const std::string & nick, const std::string & arg)
-{
-    std::string buf = ":" + server + " 482 " + nick + " " + arg + " :You're not channel operator" + "\r\n";
-    return (buf); 
-}
+
 
 /****************************************************************************/
 /*                              ERR Numerics                                */
@@ -242,3 +237,36 @@ std::string ERR_NOTONCHANNEL(const std::string & server, const std::string & nic
     return (buf); 
 }
 
+std::string ERR_CHANOPRIVSNEEDED(const std::string & server, const std::string & nick, const std::string & arg)
+{
+    std::string buf = ":" + server + " 482 " + nick + " " + arg + " :You're not channel operator" + "\r\n";
+    return (buf); 
+}
+
+std::string ERR_UNKNOWNMODE(const std::string & server, const std::string & nick, const std::string & mode)
+{
+    std::string buf = ":" + server + " 472 " + nick + " " + mode + " :is unknown mode char to me" + "\r\n";
+    return (buf);
+}
+
+std::string ERR_USERNOTINCHANNEL(const std::string & server, const std::string & nick, const std::string & args, const std::string & channel)
+{
+    std::string buf = ":" + server + " 441 " + nick + " " + args + " " + channel + " :They aren't on that channel" + "\r\n";
+    return (buf);
+}
+
+
+/****************************************************************************/
+/*                              OTHERS REPLIES                              */
+/****************************************************************************/
+
+
+std::string MODE_REPLY(const std::string &nick, const std::string & channel, const std::string & mode, const std::string & args)
+{
+    std::string buf;
+    buf = ":" + nick, + " MODE " + channel + " " + mode;
+    if (!args.empty())
+        buf += " " + args;
+    buf += "\r\n";
+    return (buf);
+}

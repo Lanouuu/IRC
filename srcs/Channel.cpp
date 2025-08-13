@@ -30,33 +30,87 @@ Channel::~Channel()
 {
 }
 
-void    Channel::setPassword(std::string const & password)
+void    Channel::setPassword(std::string const & mode, std::string const & password)
 {
-    _password = password;
-    _passwordIsSet = true;
+    if (mode == "+")
+    {
+        _password = password;
+        _passwordIsSet = true;
+    }
+    else
+    {
+        _password = "";
+        _passwordIsSet = false;
+    }
 }
 
-void    Channel::setTopic(std::string const & topic)
+
+void    Channel::setSubject(std::string const & subject)
 {
-    _topic = topic;
+    _subject = subject;
 }
 
-void    Channel::setLimit(size_t const & limit)
+void    Channel::setIsTopic(std::string const & mode)
 {
-    _limit = limit;
+    if (mode == "+")
+        _topic = true;
+    else
+        _topic = false;
+}
+
+void    Channel::setLimit(std::string const & mode, size_t const & limit)
+{
+    if (mode == "+")
+    {
+        _limitIsSet = true;
+        _limit = limit;
+    }
+    else
+    {
+        _limitIsSet = false;
+        _limit = 0;
+    }
 }
 
 void    Channel::setInvitation(std::string const & mode)
 {
-    if (mode == "y" || mode == "Y" || mode == "YES" || mode == "yes" || mode == "Yes")
+    if (mode == "+")
         _inviteOnlyIsSet = true;
-    else if (mode == "n" || mode == "N" || mode == "NO" || mode == "no" || mode == "No")
+    else if (mode == "-")
         _inviteOnlyIsSet = false;
 }
 
 void    Channel::setName(std::string const & name)
 {
     _name = name;
+}
+
+void    Channel::setOperator(std::string const & mode, std::string const & name)
+{
+    if (mode == "+")
+    {
+        if (isOperator(name))
+            return;
+        _operators.push_back(name);
+    }
+    else
+    {
+        if (_operators.size() == 1)
+        {
+            //error
+        }
+        else
+        {
+            std::vector<std::string>::iterator it = std::find(_operators.begin(), _operators.end(), name);
+            if (it != _operators.end())
+                _operators.erase(it);
+            else
+            {
+                //error
+            }
+
+        }
+    }
 }
 
 std::string const & Channel::getPassword() const
@@ -66,7 +120,7 @@ std::string const & Channel::getPassword() const
 
 std::string const & Channel::getTopic() const
 {
-    return _topic;
+    return _subject;
 }
 
 size_t const &      Channel::getLimit() const
@@ -128,7 +182,8 @@ void    Channel::broadcast(std::string const & message, Client & client)
     for (std::map<std::string, Client>::iterator it = _members.begin(); it != _members.end(); it++)
     {
         it->second.getBufOUT() =":" + client.getClientNickname() + "!" + client.getClientUsername() + "@localhost JOIN :" + _name + "\r\n";
-        send(it->second.getSocket(), it->second.getBufOUT().c_str(), it->second.getBufOUT().size(), 0);
+        if (send(it->second.getSocket(), it->second.getBufOUT().c_str(), it->second.getBufOUT().size(), 0) == -1)
+            it->second.getDisconnectClient() = true;
         it->second.getBufOUT().clear();
     }
 }

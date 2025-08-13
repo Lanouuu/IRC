@@ -11,14 +11,7 @@ Client::Client(void)
     _clientNbCmd(0),
     _disconnectClient(false),
     _isConnected(false),
-    _isPass(false),
-    _isOperator(false), 
-    _canKick(false),
-    _canMode(false),
-    _canInvite(false),
-    _canTopic(false),
-    _canOperator(false),
-    _canLimit(false)
+    _isPass(false)
 {
    return ;
 }
@@ -54,13 +47,6 @@ Client &    Client::operator=(const Client & rhs)
     this->_disconnectClient = rhs._disconnectClient;
     this->_isConnected = rhs._isConnected;
     this->_isPass = rhs._isPass;
-    this->_isOperator = rhs._isOperator;
-    this->_canKick = rhs._canKick;
-    this->_canMode = rhs._canMode;
-    this->_canInvite = rhs._canInvite;
-    this->_canTopic = rhs._canTopic;
-    this->_canOperator = rhs._canOperator;
-    this->_canLimit = rhs._canLimit;
     return (*this);
 }
 

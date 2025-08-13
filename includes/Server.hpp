@@ -84,11 +84,17 @@ class   Server
         void                NICK(Client &  client_temp, std::vector<std::string> & args);
         void                USER(Client &  client_temp, std::string & cmd, std::vector<std::string> & args);
         void                QUIT(Client & client_temp);
-        void                PONG(Client &  client_temp, std::vector<std::string> & args);
+        void                PONG(Client &  client_temp, std::string & cmd, std::vector<std::string> & args);
         void                JOIN(Client & client_temp, std::vector<std::string> & args, std::string const & cmd);
         void                TOPIC(Client &  client_temp, std::vector<std::string> & args);
+        void                MODE(Client & client_temp, std::string & cmd, std::vector<std::string> & args);
+        void                KICK(Channel & channel, std::string const & name);
 
         bool                ChannelExist(std::string const & name) const;
+        bool                hasDuplicates(std::string str, char c, int pos);
+        bool                checkModeStr(Client & client_temp, std::string & modeString);
+        bool                checkChannel(Client & client_temp, std::string & channelName, std::string & modeString, std::string & cmd);
+        bool                execMode(Client & client_temp, Channel & channel, std::string & modeString, std::string & channelName, std::vector<std::string> & args);
         bool                isAlreadyOnTheChannel(std::string const & name, std::string const & nickname) const;
 };
   

@@ -42,4 +42,11 @@ std::string ERR_INVITEONLYCHAN(const std::string & server, const std::string & n
 std::string ERR_BADCHANNELKEY(const std::string & server, const std::string & nick, const std::string & arg);
 std::string ERR_NOTONCHANNEL(const std::string & server, const std::string & nick, const std::string & arg);
 std::string ERR_CHANOPRIVSNEEDED(const std::string & server, const std::string & nick, const std::string & arg);
+std::string ERR_UNKNOWNMODE(const std::string & server, const std::string & nick, const std::string & mode);
+std::string ERR_USERNOTINCHANNEL(const std::string & server, const std::string & nick, const std::string & args, const std::string & channel);
+
+/********* Others Replies *********/
+
+std::string MODE_REPLY(const std::string &nick, const std::string & channel, const std::string & mode, const std::string & args);
+
 #endif

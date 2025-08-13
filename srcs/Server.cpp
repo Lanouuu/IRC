@@ -236,7 +236,11 @@ void    Server::serverListen(void)
                     if (!client_temp.getBufOUT().empty())
                     {
                         std::cout << BLUE << "TO SEND = " << client_temp.getBufOUT() << END << std::endl;
-                        send(socket, client_temp.getBufOUT().c_str(), client_temp.getBufOUT().size(), 0);
+                        if (send(socket, client_temp.getBufOUT().c_str(), client_temp.getBufOUT().size(), 0) == -1);
+                        {
+                            client_temp.getDisconnectClient();
+                            std::cerr << RED "Error: send: disconnect client" END << std::endl;
+                        }
                         client_temp.getBufOUT().clear();
                     }
                     checkDisconnectClient(client_temp);
@@ -312,12 +316,15 @@ void    Server::connectionReply(Client & client_temp)
 
 void    Server::checkDisconnectClient(Client & client_temp)
 {
-    if (client_temp.getDisconnectClient())
+    for (client_map::iterator it = _clientsDB.begin(); it != _clientsDB.end(); it++)
     {
-        std::cout << BLUE << "Client déconnecté : " << client_temp.getSocket() << END << std::endl;
-        close(client_temp.getSocket());
-        FD_CLR(client_temp.getSocket(), &_masterSet);
-        _clientsDB.erase(client_temp.getSocket());
+        if (it->second.getDisconnectClient())
+        {
+            std::cout << BLUE << "Client déconnecté : " << it->second.getSocket() << END << std::endl;
+            close(it->second.getSocket());
+            FD_CLR(it->second.getSocket(), &_masterSet);
+            _clientsDB.erase(it->second.getSocket());
+        }
     }
     return ;
 }
@@ -398,11 +405,11 @@ int    Server::execCMD(Client & client_temp, std::string & req)
     else if (cmd == "JOIN")
         JOIN(client_temp, args, cmd);
     else if (cmd == "PING")
-        PONG(client_temp, args);
+        PONG(client_temp, cmd, args);
     else if (cmd == "TOPIC")
         TOPIC(client_temp, args);
     else if (cmd == "MODE")
-        return (0);
+        MODE(client_temp, cmd, args);
     else
         client_temp.getBufOUT() = ERR_UNKNOWNCOMMAND(_serverName, client_temp.getClientNickname(), cmd);
     return (0);
@@ -594,8 +601,13 @@ void    Server::QUIT(Client & client_temp)
 /********* PONG *********/
 
 
-void    Server::PONG(Client &  client_temp, std::vector<std::string> & args)
+void    Server::PONG(Client &  client_temp, std::string & cmd, std::vector<std::string> & args)
 {
+    if (args.empty())
+    {
+        client_temp.getBufOUT() = ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), cmd);
+        return ;
+    }
     if (!client_temp.getIsConnected())
     {
         client_temp.getBufOUT() = ERR_NOTREGISTERED(_serverName, client_temp.getClientNickname());
@@ -742,7 +754,9 @@ void    Server::JOIN(Client & client_temp, std::vector<std::string> & args, std:
 
 }
 
+
 /********* TOPIC *********/
+
 
 void Server::TOPIC(Client &  client_temp, std::vector<std::string> & args) {
     std::cout << BLUE "TOPIC COMMAND" END << std::endl;
@@ -785,7 +799,7 @@ void Server::TOPIC(Client &  client_temp, std::vector<std::string> & args) {
             //setting topic
             if(this->_channelDB.at(args[0]).isOperator(client_temp.getClientNickname()) == true)
             {
-                this->_channelDB.at(args[0]).setTopic(args[1]);
+                this->_channelDB.at(args[0]).setSubject(args[1]);
                 this->_channelDB.at(args[0]).broadcast(MY_RPL_TOPIC(_serverName, client_temp.getClientNickname(), client_temp.getClientUsername(), args[0], this->_channelDB.at(args[0]).getTopic()), client_temp);
                 return;
             }
@@ -801,7 +815,7 @@ void Server::TOPIC(Client &  client_temp, std::vector<std::string> & args) {
             //unsetting topic
             if(this->_channelDB.at(args[0]).isOperator(client_temp.getClientNickname()) == true)
             {
-                this->_channelDB.at(args[0]).setTopic("");
+                this->_channelDB.at(args[0]).setSubject("");
                 this->_channelDB.at(args[0]).broadcast(MY_RPL_TOPIC(_serverName, client_temp.getClientNickname(), client_temp.getClientUsername(), args[0], this->_channelDB.at(args[0]).getTopic()), client_temp); 
             }
             else
@@ -813,4 +827,177 @@ void Server::TOPIC(Client &  client_temp, std::vector<std::string> & args) {
         std::cout << "ici 746" << std::endl;
         client_temp.getBufOUT() = ERR_NOSUCHCHANNEL(_serverName, client_temp.getClientNickname(), args[0]);
     }
+}
+
+
+void    Server::KICK(Channel & channel, std::string const & name)
+{
+
+}
+
+/********* MODE *********/
+
+
+bool Server::hasDuplicates(std::string str, char c, int pos) 
+{
+    if (str.find(c, pos + 1) != std::string::npos)
+        return true;
+    return false;
+}
+
+bool Server::checkChannel(Client & client_temp, std::string & channelName, std::string & modeString, std::string & cmd)
+{
+    if (channelName.empty() || modeString.empty())
+    {
+        client_temp.getBufOUT() = ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), cmd);
+        return (false);
+    }
+    if (channelName[0] != '#')
+    {
+        client_temp.getBufOUT() = ":" + _serverName + " :MODE for user is not supported" + "\r\n";
+        return (false);
+    }
+    if (!ChannelExist(channelName))
+    {
+        client_temp.getBufOUT() = ERR_NOSUCHCHANNEL(_serverName, client_temp.getClientNickname(), channelName);
+        return (false);
+    }
+    if (!isAlreadyOnTheChannel(channelName, client_temp.getClientNickname()))
+    {
+        client_temp.getBufOUT() = ERR_NOTONCHANNEL(_serverName, client_temp.getClientNickname(), channelName);
+        return (false);
+    }
+    return (true);
+}
+
+bool Server::checkModeStr(Client & client_temp, std::string & modeString)
+{
+    if (modeString.find_first_not_of("+-itkol") != std::string::npos)
+    {
+        client_temp.getBufOUT() = ERR_UNKNOWNMODE(_serverName, client_temp.getClientNickname(), modeString);
+        return (false);
+    }
+    if (isalpha(modeString[0]) || !isalpha(modeString[modeString.size() - 1]))
+    {
+        client_temp.getBufOUT() = ERR_UNKNOWNMODE(_serverName, client_temp.getClientNickname(), modeString);
+        return (false);
+    }
+    for (std::size_t i = 0; i < modeString.size(); i++)
+    {
+        if (isalpha(modeString[i]))
+        {
+            if (hasDuplicates(modeString, modeString[i], i))
+            {
+                client_temp.getBufOUT() = ERR_UNKNOWNMODE(_serverName, client_temp.getClientNickname(), modeString);
+                return (false);
+            }
+        }
+        if (modeString[i] == '+' || modeString[i] == '-')
+        {
+            if (modeString[i + 1] == '+' || modeString[i + 1] == '-')
+            {
+                client_temp.getBufOUT() = ERR_UNKNOWNMODE(_serverName, client_temp.getClientNickname(), modeString);
+                return (false);
+            }
+        }
+    }
+    return (true);
+}
+
+bool    Server::execMode(Client & client_temp, Channel & channel, std::string & modeString, std::string & channelName, std::vector<std::string> & args)
+{
+    std::string    actualSign = "" + modeString[0];
+    int            j = 2;
+    for (std::size_t i = 1; i < modeString.size(); i++)
+    {
+        if (!isalpha(modeString[i]))
+            actualSign = modeString[i];
+        if (modeString[i] == 'i')
+        {
+            channel.setInvitation(actualSign);
+            channel.broadcast(MODE_REPLY(client_temp.getClientNickname(), channel.getName(), actualSign + 'i', ""), client_temp);
+        }
+        else if (modeString[i] == 't')
+        {
+            channel.setIsTopic(actualSign);
+            channel.broadcast(MODE_REPLY(client_temp.getClientNickname(), channel.getName(), actualSign + 't', ""), client_temp);
+        }
+        else if (modeString[i] = 'o')
+        {
+            if(args.size() > j)
+            {
+                if (isAlreadyOnTheChannel(channelName, args[j]))
+                {
+                    channel.setOperator(actualSign, args[j]);
+                    channel.broadcast(MODE_REPLY(client_temp.getClientNickname(), channel.getName(), actualSign + 'o', args[j]), client_temp);
+                    ++j;
+                }
+                else
+                {
+                    client_temp.getBufOUT() = ERR_USERNOTINCHANNEL(_serverName, client_temp.getClientNickname(), args[j], channel.getName());
+                    return (false);
+                }
+            }
+            else
+            {
+                client_temp.getBufOUT() = ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), "MODE");
+                return (false);
+            }
+        }
+        else if (modeString[i] == 'l')
+        {
+            if(args.size() > j)
+            {
+                channel.setLimit(actualSign, args[j]);
+                channel.broadcast(MODE_REPLY(client_temp.getClientNickname(), channel.getName(), actualSign + 'l', args[j]), client_temp);
+                ++j;
+            }
+            else
+            {
+                client_temp.getBufOUT() = ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), "MODE");
+                return (false);
+            }
+        }
+        else if (modeString[i] == 'k')
+        {
+            if (actualSign == "+")
+            {
+                if (args.size() < j)
+                {
+                    client_temp.getBufOUT() = ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), "MODE");
+                    return (false);
+                }
+                channel.setPassword(actualSign, args[j]);
+                channel.broadcast(MODE_REPLY(client_temp.getClientNickname(), channel.getName(), actualSign + 'k', args[j]), client_temp);
+            }
+            else
+            {
+                //err
+            }
+        }
+    }
+    return (true);
+}
+
+void    Server::MODE(Client & client_temp, std::string & cmd, std::vector<std::string> & args)
+{
+    if (args.size() < 2)
+    {
+        client_temp.getBufOUT() = ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), cmd);
+        return ;
+    }
+    std::string channelName = args[0];
+    std::string modeString = args[1];
+    if (!checkChannel(client_temp, channelName, modeString, cmd))
+        return ;
+    Channel & channel = _channelDB[channelName];
+    if (!channel.isOperator(client_temp.getClientNickname()))
+    {
+        client_temp.getBufOUT() = ERR_CHANOPRIVSNEEDED(_serverName, client_temp.getClientNickname(), channelName);
+        return ;
+    }
+    if (!checkModeStr(client_temp, modeString))
+        return ;
+    if (!execMode(client_temp, channel, modeString, channelName, args))
+           return ;
 }

@@ -48,13 +48,6 @@ class   Client
         bool                    _disconnectClient;
         bool                    _isConnected;
         bool                    _isPass;
-        bool                    _isOperator;
-        bool                    _canKick;
-        bool                    _canMode;
-        bool                    _canInvite;
-        bool                    _canTopic;
-        bool                    _canOperator;
-        bool                    _canLimit;
 };
 
 #endif

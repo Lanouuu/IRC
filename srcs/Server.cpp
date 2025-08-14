@@ -218,9 +218,15 @@ void    Server::serverListen(void)
     {
         _tempSet = _masterSet;
 
-        select(_serverFdMax + 1, &_tempSet, NULL, NULL, NULL);
-        if (stop)
-            return ;
+        if (select(_serverFdMax + 1, &_tempSet, NULL, NULL, NULL) == -1)
+        {
+            if (stop)
+                return ;
+            if (errno == EINTR)
+                continue;
+            std::cerr << RED "Error: select: " << strerror(errno) << END << std::endl;
+            continue ;
+        }
         std::cout << BLUE << "Event catch" << END << std::endl;
         for (int socket = 0; socket <= _serverFdMax; socket++) 
         {
@@ -849,7 +855,10 @@ void Server::TOPIC(Client &  client_temp, std::vector<std::string> & args) {
     }
 }
 
+
 /********* KICK **********/
+
+
 void    Server::KICK(Client & client, std::string const & cmd, std::vector<std::string> const & args)
 {
     if (args.size() < 2)
@@ -1034,9 +1043,10 @@ bool    Server::execMode(Client & client_temp, Channel & channel, std::string & 
                 channel.setPassword(actualSign, args[j]);
                 channel.broadcast(MODE_REPLY(client_temp.getClientNickname(), channel.getName(), actualSign + 'k', args[j]));
             }
-            else
+            else if (actualSign == "-")
             {
-                //err
+                channel.setPassword(actualSign, args[j]);
+                channel.broadcast(MODE_REPLY(client_temp.getClientNickname(), channel.getName(), actualSign + 'k', args[j]));
             }
         }
     }

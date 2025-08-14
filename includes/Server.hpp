@@ -88,7 +88,7 @@ class   Server
         void                JOIN(Client & client_temp, std::vector<std::string> & args, std::string const & cmd);
         void                TOPIC(Client &  client_temp, std::vector<std::string> & args);
         void                MODE(Client & client_temp, std::string & cmd, std::vector<std::string> & args);
-        void                KICK(Channel & channel, std::string const & name);
+        // void                KICK(Channel & channel, std::string const & name);
 
         bool                ChannelExist(std::string const & name) const;
         bool                hasDuplicates(std::string str, char c, int pos);

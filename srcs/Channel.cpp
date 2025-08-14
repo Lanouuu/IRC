@@ -177,11 +177,11 @@ bool    Channel::isOperator(const std::string nick) const
         return false;
 }
 
-void    Channel::broadcast(std::string const & message, Client & client)
+void    Channel::broadcast(std::string const & message)
 {
     for (std::map<std::string, Client>::iterator it = _members.begin(); it != _members.end(); it++)
     {
-        it->second.getBufOUT() =":" + client.getClientNickname() + "!" + client.getClientUsername() + "@localhost JOIN :" + _name + "\r\n";
+        it->second.getBufOUT() = message;
         if (send(it->second.getSocket(), it->second.getBufOUT().c_str(), it->second.getBufOUT().size(), 0) == -1)
         {
             it->second.getDisconnectClient() = true;

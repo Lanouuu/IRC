@@ -236,7 +236,7 @@ void    Server::serverListen(void)
                     if (!client_temp.getBufOUT().empty())
                     {
                         std::cout << BLUE << "TO SEND = " << client_temp.getBufOUT() << END << std::endl;
-                        if (send(socket, client_temp.getBufOUT().c_str(), client_temp.getBufOUT().size(), 0) == -1);
+                        if (send(socket, client_temp.getBufOUT().c_str(), client_temp.getBufOUT().size(), 0) == -1)
                         {
                             client_temp.getDisconnectClient();
                             std::cerr << RED "Error: send" END << std::endl;
@@ -316,6 +316,7 @@ void    Server::connectionReply(Client & client_temp)
 
 void    Server::checkDisconnectClient(Client & client_temp)
 {
+    (void)client_temp;
     for (client_map::iterator it = _clientsDB.begin(); it != _clientsDB.end(); it++)
     {
         if (it->second.getDisconnectClient())
@@ -638,7 +639,7 @@ static void createChannel(channel_map & channelDB, std::string const & name, std
 {
     channelDB.insert(std::pair<std::string, Channel>(name, Channel()));
     if (!password.empty())
-        channelDB.at(name).setPassword(password);
+        channelDB.at(name).setPassword("+", password);
     channelDB.at(name).setName(name);
 }
 
@@ -708,7 +709,7 @@ static void joinChannel(Client & client, Channel & channel)
 {
     std::string message = ":" + client.getClientNickname() + "!" + client.getClientUsername() + "@localhost JOIN :" + channel.getName() + "\r\n";
     channel.addMember(client);
-    channel.broadcast(message, client);
+    channel.broadcast(message);
 }
 
 void    Server::JOIN(Client & client_temp, std::vector<std::string> & args, std::string const & cmd)
@@ -800,7 +801,7 @@ void Server::TOPIC(Client &  client_temp, std::vector<std::string> & args) {
             if(this->_channelDB.at(args[0]).isOperator(client_temp.getClientNickname()) == true)
             {
                 this->_channelDB.at(args[0]).setSubject(args[1]);
-                this->_channelDB.at(args[0]).broadcast(MY_RPL_TOPIC(_serverName, client_temp.getClientNickname(), client_temp.getClientUsername(), args[0], this->_channelDB.at(args[0]).getTopic()), client_temp);
+                this->_channelDB.at(args[0]).broadcast(MY_RPL_TOPIC(_serverName, client_temp.getClientNickname(), client_temp.getClientUsername(), args[0], this->_channelDB.at(args[0]).getTopic()));
                 return;
             }
             else
@@ -816,7 +817,7 @@ void Server::TOPIC(Client &  client_temp, std::vector<std::string> & args) {
             if(this->_channelDB.at(args[0]).isOperator(client_temp.getClientNickname()) == true)
             {
                 this->_channelDB.at(args[0]).setSubject("");
-                this->_channelDB.at(args[0]).broadcast(MY_RPL_TOPIC(_serverName, client_temp.getClientNickname(), client_temp.getClientUsername(), args[0], this->_channelDB.at(args[0]).getTopic()), client_temp); 
+                this->_channelDB.at(args[0]).broadcast(MY_RPL_TOPIC(_serverName, client_temp.getClientNickname(), client_temp.getClientUsername(), args[0], this->_channelDB.at(args[0]).getTopic())); 
             }
             else
                 client_temp.getBufOUT() = ERR_CHANOPRIVSNEEDED(_serverName, client_temp.getClientNickname(), args[0]);
@@ -830,10 +831,10 @@ void Server::TOPIC(Client &  client_temp, std::vector<std::string> & args) {
 }
 
 
-void    Server::KICK(Channel & channel, std::string const & name)
-{
+// void    Server::KICK(Channel & channel, std::string const & name)
+// {
 
-}
+// }
 
 /********* MODE *********/
 
@@ -907,7 +908,7 @@ bool Server::checkModeStr(Client & client_temp, std::string & modeString)
 bool    Server::execMode(Client & client_temp, Channel & channel, std::string & modeString, std::string & channelName, std::vector<std::string> & args)
 {
     std::string    actualSign = "" + modeString[0];
-    int            j = 2;
+    size_t            j = 2;
     for (std::size_t i = 1; i < modeString.size(); i++)
     {
         if (!isalpha(modeString[i]))
@@ -915,21 +916,21 @@ bool    Server::execMode(Client & client_temp, Channel & channel, std::string & 
         if (modeString[i] == 'i')
         {
             channel.setInvitation(actualSign);
-            channel.broadcast(MODE_REPLY(client_temp.getClientNickname(), channel.getName(), actualSign + 'i', ""), client_temp);
+            channel.broadcast(MODE_REPLY(client_temp.getClientNickname(), channel.getName(), actualSign + 'i', ""));
         }
         else if (modeString[i] == 't')
         {
             channel.setIsTopic(actualSign);
-            channel.broadcast(MODE_REPLY(client_temp.getClientNickname(), channel.getName(), actualSign + 't', ""), client_temp);
+            channel.broadcast(MODE_REPLY(client_temp.getClientNickname(), channel.getName(), actualSign + 't', ""));
         }
-        else if (modeString[i] = 'o')
+        else if (modeString[i] == 'o')
         {
             if(args.size() > j)
             {
                 if (isAlreadyOnTheChannel(channelName, args[j]))
                 {
                     channel.setOperator(actualSign, args[j]);
-                    channel.broadcast(MODE_REPLY(client_temp.getClientNickname(), channel.getName(), actualSign + 'o', args[j]), client_temp);
+                    channel.broadcast(MODE_REPLY(client_temp.getClientNickname(), channel.getName(), actualSign + 'o', args[j]));
                     ++j;
                 }
                 else
@@ -948,8 +949,8 @@ bool    Server::execMode(Client & client_temp, Channel & channel, std::string & 
         {
             if(args.size() > j)
             {
-                channel.setLimit(actualSign, args[j]);
-                channel.broadcast(MODE_REPLY(client_temp.getClientNickname(), channel.getName(), actualSign + 'l', args[j]), client_temp);
+                channel.setLimit(actualSign, stringToSizeT(args[j]));
+                channel.broadcast(MODE_REPLY(client_temp.getClientNickname(), channel.getName(), actualSign + 'l', args[j]));
                 ++j;
             }
             else
@@ -968,7 +969,7 @@ bool    Server::execMode(Client & client_temp, Channel & channel, std::string & 
                     return (false);
                 }
                 channel.setPassword(actualSign, args[j]);
-                channel.broadcast(MODE_REPLY(client_temp.getClientNickname(), channel.getName(), actualSign + 'k', args[j]), client_temp);
+                channel.broadcast(MODE_REPLY(client_temp.getClientNickname(), channel.getName(), actualSign + 'k', args[j]));
             }
             else
             {

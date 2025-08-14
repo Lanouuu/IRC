@@ -37,7 +37,7 @@ class   Channel
         std::vector<std::string> const & getOperators() const;
         bool                isOperator(const std::string nick) const;
 
-        void                broadcast(std::string const & message, Client & client);
+        void                broadcast(std::string const & message);
         void                addMember(Client & client);
 
     private:

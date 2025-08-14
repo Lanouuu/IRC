@@ -8,9 +8,11 @@
 
 #include <signal.h>
 #include <iostream>
+#include <sstream>
 
 extern sig_atomic_t stop;
 
 void    signal_handler(int s);
+size_t  stringToSizeT(std::string toCast);
 
 #endif

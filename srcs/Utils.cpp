@@ -19,3 +19,13 @@ void signal_handler(int s)
     stop = 1;
     return ;
 }
+
+size_t  stringToSizeT(std::string toCast)
+{
+    size_t value = 0;
+
+    std::stringstream ss(toCast);
+    ss >> value;
+
+    return value;
+}

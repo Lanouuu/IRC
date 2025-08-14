@@ -6,7 +6,7 @@
 # include "Client.hpp"
 
 class Client;
-
+class Channel;
 /********* RPL Numerics *********/
 
 std::string RPL_WELCOME(const std::string & server, const std::string & nick, const std::string & network);
@@ -20,7 +20,7 @@ std::string RPL_TOPIC(const std::string & server, const std::string & nick, cons
 std::string RPL_TOPICWHOTIME(const std::string & server, const std::string & nick, const std::string & chan, const std::string & arg);
 
 std::string MY_RPL_TOPIC(const std::string & server, const std::string & nick, const std::string & user, const std::string & chan, const std::string & arg);
-std::string RPL_NAMREPLY(const std::string & server, const std::string & nick, const std::string & arg, std::map<std::string, Client> const & members);
+std::string RPL_NAMREPLY(const std::string & server, const std::string & nick, Channel const & channel);
 std::string RPL_ENDOFNAMES(const std::string & server, const std::string & nick, const std::string & arg);
 
 /********* ERR Numerics *********/
@@ -48,5 +48,6 @@ std::string ERR_USERNOTINCHANNEL(const std::string & server, const std::string &
 /********* Others Replies *********/
 
 std::string MODE_REPLY(const std::string &nick, const std::string & channel, const std::string & mode, const std::string & args);
+std::string KICK_REPLY(const std::string & server, const std::string &nick, const std::string &username, const std::string &victimName, const std::string & channel, const std::string & args);
 
 #endif

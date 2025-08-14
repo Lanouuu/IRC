@@ -168,6 +168,11 @@ std::vector<std::string> const & Channel::getOperators() const
     return _operators;
 }
 
+std::vector<std::pair<std::string, std::string> > &  Channel::getBanList()
+{
+    return _banList;
+}
+
 bool    Channel::isOperator(const std::string nick) const
 {
     std::vector<std::string>::const_iterator it = std::find(_operators.begin(), _operators.end(), nick);
@@ -175,6 +180,20 @@ bool    Channel::isOperator(const std::string nick) const
         return true;
     else
         return false;
+}
+
+std::vector<std::string>::iterator Channel::findOperator(std::string const & name)
+{
+    std::vector<std::string>::iterator it = std::find(_operators.begin(), _operators.end(), name);
+    if (it == _operators.end())
+        return _operators.end();
+    return it;
+}
+
+void    Channel::eraseOperator(std::string const & name)
+{
+    std::vector<std::string>::iterator it = findOperator(name);
+    _operators.erase(it);
 }
 
 void    Channel::broadcast(std::string const & message)
@@ -194,4 +213,9 @@ void    Channel::broadcast(std::string const & message)
 void    Channel::addMember(Client & client)
 {
     _members.insert(std::pair<std::string, Client>(client.getClientNickname(), client));
+}
+
+void    Channel::addOperator(std::string const & name)
+{
+    _operators.push_back(name);
 }

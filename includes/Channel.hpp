@@ -32,6 +32,7 @@ class   Channel
         bool const &        topicIsSet() const;
         bool const &        passwordIsSet() const;
         bool const &        getLimitMode() const;
+        std::vector<std::pair<std::string, std::string> > &        getBanList();
         std::map<std::string, Client> const & getMembers() const;
         std::map<std::string, Client> & getMembers();
         std::vector<std::string> const & getOperators() const;
@@ -39,15 +40,18 @@ class   Channel
 
         void                broadcast(std::string const & message);
         void                addMember(Client & client);
+        void                addOperator(std::string const & name);
+        void                eraseOperator(std::string const & name);
+        std::vector<std::string>::iterator findOperator(std::string const & name);
 
     private:
         std::map<std::string, Client>   _members;
         std::vector<std::string>        _operators;
+        std::vector<std::pair<std::string, std::string> >        _banList;
         std::string                     _password;
         std::string                     _subject;
         size_t                          _limit;
         std::string                     _name;
-        // size_t                          _nbOperator;
         
         bool                            _inviteOnlyIsSet;
         bool                            _topicRestrictionIsSet;

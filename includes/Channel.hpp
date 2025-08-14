@@ -40,6 +40,7 @@ class   Channel
 
         void                broadcast(std::string const & message);
         void                addMember(Client & client);
+        void                eraseMember(Client & client);
         void                addOperator(std::string const & name);
         void                eraseOperator(std::string const & name);
         std::vector<std::string>::iterator findOperator(std::string const & name);

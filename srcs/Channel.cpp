@@ -215,6 +215,11 @@ void    Channel::addMember(Client & client)
     _members.insert(std::pair<std::string, Client>(client.getClientNickname(), client));
 }
 
+void    Channel::eraseMember(Client & client)
+{
+    _members.erase(client.getClientNickname());
+}
+
 void    Channel::addOperator(std::string const & name)
 {
     _operators.push_back(name);

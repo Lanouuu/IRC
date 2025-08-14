@@ -89,7 +89,8 @@ class   Server
         void                TOPIC(Client &  client_temp, std::vector<std::string> & args);
         void                MODE(Client & client_temp, std::string & cmd, std::vector<std::string> & args);
         void                KICK(Client & client, std::string const & cmd, std::vector<std::string> const & args);
-
+        void                PART(Client &  client_temp, std::vector<std::string> & args);
+        void                LIST(Client &  client_temp);
         bool                ChannelExist(std::string const & name) const;
         bool                hasDuplicates(std::string str, char c, int pos);
         bool                checkModeStr(Client & client_temp, std::string & modeString);

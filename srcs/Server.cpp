@@ -425,6 +425,10 @@ int    Server::execCMD(Client & client_temp, std::string & req)
         MODE(client_temp, cmd, args);
     else if (cmd == "KICK")
         KICK(client_temp, cmd, args);
+    else if (cmd == "PART")
+        PART(client_temp, args);
+    else if (cmd == "LIST")
+        LIST(client_temp);
     else
         client_temp.getBufOUT() = ERR_UNKNOWNCOMMAND(_serverName, client_temp.getClientNickname(), cmd);
     return (0);
@@ -821,7 +825,7 @@ void Server::TOPIC(Client &  client_temp, std::vector<std::string> & args) {
             {
                 std::ostringstream oss;
                 for (size_t i = 1; i < args.size(); ++i) {
-                    if (i > 1) oss << " "; // espace entre les mots
+                    if (i > 1) oss << " ";
                     oss << args[i];
                 }
                 std::string subject = oss.str();
@@ -1074,4 +1078,108 @@ void    Server::MODE(Client & client_temp, std::string & cmd, std::vector<std::s
         return ;
     if (!execMode(client_temp, channel, modeString, channelName, args))
            return ;
+}
+
+/********* PART *********/
+
+void Server::PART(Client &  client_temp, std::vector<std::string> & args) {
+    std::cout << BLUE "PART COMMAND" END << std::endl;
+    if(args.empty())
+    {
+        std::cout << "ici 1073" << std::endl;
+        client_temp.getBufOUT() = ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), client_temp.getClientUsername());
+        return;
+    }
+    std::vector<std::string> channels;
+    std::string temp;
+    for (size_t i = 0; i < args[0].size(); ++i) {
+        if(args[0][i] == ',')
+        {
+            channels.push_back(temp);
+            temp.clear();
+            continue ;
+        }
+        temp += args[0][i];
+    }
+    if (!temp.empty()) {
+    channels.push_back(temp);
+    }
+    for (size_t i = 0; i < channels.size(); i++)
+    {
+        if(ChannelExist(channels[i])) {
+            if (channels[i][0] != '#')
+            {
+                client_temp.getBufOUT() = ERR_NOSUCHCHANNEL(_serverName, client_temp.getClientNickname(), channels[i]);
+                continue ;
+            }
+            if(!isAlreadyOnTheChannel(channels[i], client_temp.getClientNickname()))
+            {
+                client_temp.getBufOUT() = ERR_NOTONCHANNEL(_serverName, client_temp.getClientNickname(), channels[i]);
+                continue ;
+            }
+
+            std::string reason;
+            std::map<std::string, Channel>::iterator it = this->_channelDB.find(channels[i]);
+            if(it->second.isOperator(client_temp.getClientNickname()) == true)
+            {
+                //dernier op et encore du monde dans le chan
+                if(it->second.getOperators().size() == 1 && it->second.getMembers().size() > 1)
+                {
+                    std::map<std::string, Client>::iterator it2;
+                    it2 = it->second.getMembers().find(client_temp.getClientNickname());
+                    it2++;
+                    it->second.addOperator(it2->first);
+                    it->second.eraseOperator(client_temp.getClientNickname());
+                    it->second.eraseMember(client_temp);
+                    if(args.size() > 1)
+                    {
+                        for(size_t i = 1; i < args.size(); i++) {
+                            reason += args[i];
+                            if(i + 1 < args.size())
+                                reason += " ";
+                        }
+                    }
+                    it->second.broadcast(RPL_PART(_serverName, client_temp.getClientNickname(), client_temp.getClientUsername(), channels[i], reason));
+                    it->second.broadcast(":" + _serverName + " MODE " + it->second.getName() + " +o " + it2->first + "\r\n");
+                    continue ;
+                }
+                
+                //if last pers on server -> remove server
+                if(it->second.getOperators().size() == 1 && it->second.getMembers().size() == 1)
+                {
+                    std::cout << "ici 1129" << std::endl;
+                    _channelDB.erase(it->second.getName());
+                }
+            }
+            else {
+                it->second.broadcast(RPL_PART(_serverName, client_temp.getClientNickname(), client_temp.getClientUsername(), channels[i], reason));
+                it->second.eraseMember(client_temp);
+            }
+        }
+        else {
+            std::cout << "ici 1091" << std::endl;
+            client_temp.getBufOUT() = ERR_NOSUCHCHANNEL(_serverName, client_temp.getClientNickname(), channels[i]);
+        }        
+    }
+}
+
+/********* LIST *********/
+
+void Server::LIST(Client &  client_temp) {
+    std::stringstream ss;
+    ss << _serverName + " 321 " + client_temp.getClientNickname() + " Channel :Users Name\r\n";
+    std::map<std::string, Channel>::const_iterator it = this->getChannelDB().begin();
+    for(; it != this->getChannelDB().end(); it++)
+    {
+        std::cout << "boucle list" << std::endl;
+        std::stringstream ss2;
+        ss2 << it->second.getMembers().size();
+        std::string member_count = ss2.str();
+        if(it->second.getTopic().empty())
+            ss <<  _serverName + " 322 " + client_temp.getClientNickname() + " " + it->first + " " + member_count + "\r\n";
+        else 
+            ss <<  _serverName + " 322 " + client_temp.getClientNickname() + " " + it->first + " " + member_count + " " + ":" + it->second.getTopic() + "\r\n";
+    }
+    ss << _serverName + " 323 " + client_temp.getClientNickname() +  " :End of LIST\r\n";
+    client_temp.getBufOUT() += ss.str();
 }

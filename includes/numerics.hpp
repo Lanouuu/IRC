@@ -22,6 +22,7 @@ std::string RPL_TOPICWHOTIME(const std::string & server, const std::string & nic
 std::string MY_RPL_TOPIC(const std::string & server, const std::string & nick, const std::string & user, const std::string & chan, const std::string & arg);
 std::string RPL_NAMREPLY(const std::string & server, const std::string & nick, Channel const & channel);
 std::string RPL_ENDOFNAMES(const std::string & server, const std::string & nick, const std::string & arg);
+std::string RPL_PART(const std::string & server, const std::string & nick, const std::string & user, const std::string & chan, const std::string & reason);
 
 /********* ERR Numerics *********/
 

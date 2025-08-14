@@ -48,5 +48,6 @@ std::string ERR_USERNOTINCHANNEL(const std::string & server, const std::string &
 /********* Others Replies *********/
 
 std::string MODE_REPLY(const std::string &nick, const std::string & channel, const std::string & mode, const std::string & args);
+std::string KICK_REPLY(const std::string & server, const std::string &nick, const std::string &username, const std::string &victimName, const std::string & channel, const std::string & args);
 
 #endif

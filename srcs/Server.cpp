@@ -232,7 +232,9 @@ void    Server::serverListen(void)
                 {
                     Client & client_temp = _clientsDB[socket];
                     readClient(client_temp, socket);
-                    connectionReply(client_temp); 
+                    connectionReply(client_temp);
+                    std::cout << RED "CLIENT USERNAME = " << client_temp.getClientUsername() << END << std::endl;
+                    std::cout << RED "CLIENT REALNAME = " << client_temp.getClientRealname() << END << std::endl;
                     if (!client_temp.getBufOUT().empty())
                     {
                         std::cout << BLUE << "TO SEND = " << client_temp.getBufOUT() << END << std::endl;
@@ -842,14 +844,35 @@ void    Server::KICK(Client & client, std::string const & cmd, std::vector<std::
     }
     if (ChannelExist(args[0]))
     {
-        Channel channel = _channelDB.at(args[0]);
-        if (channel.isOperator(client.getClientNickname()))
+        std::cout << "KICK CHANNEL EXIST" << std::endl;
+        // Channel channel = _channelDB.at(args[0]);
+        if (_channelDB.at(args[0]).isOperator(client.getClientNickname()))
         {
-            if (channel.getMembers().find(args[1]) != channel.getMembers().end())
+            if (_channelDB.at(args[0]).getMembers().find(args[1]) != _channelDB.at(args[0]).getMembers().end())
             {
-                channel.getMembers().erase(args[1]);
-                if (channel.isOperator(args[1]))
-                    channel.eraseOperator(args[1]);
+                std::cout << args[1] << " HAS BEEN KICK" << std::endl;
+                if (args.size() > 2)
+                {
+                    std::cout << "KICK BROADCAST 1" << std::endl;
+                    _channelDB.at(args[0]).broadcast(KICK_REPLY(_serverName, client.getClientNickname(), client.getClientUsername(), args[1], args[0], args[2]));
+
+                }
+                else
+                {
+                    std::cout << "KICK BROADCAST 2" << std::endl;
+
+                    _channelDB.at(args[0]).broadcast(KICK_REPLY(_serverName, client.getClientNickname(), client.getClientUsername(), args[1], args[0], ""));       
+                }
+                _channelDB.at(args[0]).getBanList().push_back(std::pair<std::string, std::string>(args[1], _channelDB.at(args[0]).getMembers().find(args[1])->second.getClientRealname()));
+                _channelDB.at(args[0]).getMembers().erase(args[1]);
+                if (_channelDB.at(args[0]).isOperator(args[1]))
+                    _channelDB.at(args[0]).eraseOperator(args[1]);
+                if (_channelDB.at(args[0]).getMembers().size() == 0)
+                {
+                    std::cout << "NO MEMBER LEFT" << std::endl;
+                    _channelDB.erase(args[0]);
+                    return ;
+                }
             }
             else
                 client.getBufOUT() = ERR_NOTONCHANNEL(_serverName, client.getClientNickname(), cmd);
@@ -932,7 +955,7 @@ bool Server::checkModeStr(Client & client_temp, std::string & modeString)
 
 bool    Server::execMode(Client & client_temp, Channel & channel, std::string & modeString, std::string & channelName, std::vector<std::string> & args)
 {
-    std::string    actualSign = "" + modeString[0];
+    std::string    actualSign (1, modeString[0]);
     size_t            j = 2;
     for (std::size_t i = 1; i < modeString.size(); i++)
     {

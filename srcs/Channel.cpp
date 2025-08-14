@@ -168,6 +168,11 @@ std::vector<std::string> const & Channel::getOperators() const
     return _operators;
 }
 
+std::vector<std::pair<std::string, std::string> > &  Channel::getBanList()
+{
+    return _banList;
+}
+
 bool    Channel::isOperator(const std::string nick) const
 {
     std::vector<std::string>::const_iterator it = std::find(_operators.begin(), _operators.end(), nick);

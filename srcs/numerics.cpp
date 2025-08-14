@@ -272,3 +272,13 @@ std::string MODE_REPLY(const std::string &nick, const std::string & channel, con
     buf += "\r\n";
     return (buf);
 }
+
+std::string KICK_REPLY(const std::string & server, const std::string &nick, const std::string &username, const std::string &victimName, const std::string & channel, const std::string & args)
+{
+    std::string buf;
+    buf = ":" + server + " " + nick + "!" + username + "@localhost KICK " + channel + " " + victimName;
+    if (!args.empty())
+        buf += " :" + args;
+    buf += "\r\n";
+    return (buf);
+}

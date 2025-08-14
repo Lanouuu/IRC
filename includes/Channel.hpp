@@ -47,7 +47,7 @@ class   Channel
         std::string                     _subject;
         size_t                          _limit;
         std::string                     _name;
-        size_t                          _nbOperator;
+        // size_t                          _nbOperator;
         
         bool                            _inviteOnlyIsSet;
         bool                            _topicRestrictionIsSet;

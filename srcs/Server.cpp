@@ -411,6 +411,8 @@ int    Server::execCMD(Client & client_temp, std::string & req)
         TOPIC(client_temp, args);
     else if (cmd == "MODE")
         MODE(client_temp, cmd, args);
+    else if (cmd == "KICK")
+        KICK(client_temp, cmd, args);
     else
         client_temp.getBufOUT() = ERR_UNKNOWNCOMMAND(_serverName, client_temp.getClientNickname(), cmd);
     return (0);
@@ -635,9 +637,10 @@ static int  ParseChannelName(std::string const & name)
     return 0;
 }
 
-static void createChannel(channel_map & channelDB, std::string const & name, std::string const & password)
+static void createChannel(channel_map & channelDB, std::string const & name, std::string const & password, std::string const & nickname)
 {
     channelDB.insert(std::pair<std::string, Channel>(name, Channel()));
+    channelDB.at(name).addOperator(nickname);
     if (!password.empty())
         channelDB.at(name).setPassword("+", password);
     channelDB.at(name).setName(name);
@@ -699,7 +702,7 @@ void    Server::joinReply(Client & client, Channel const & channel)
         topic = RPL_TOPIC(_serverName, client.getClientNickname(), channel.getName(), channel.getTopic());
     else
         topic = RPL_NOTOPIC(_serverName, client.getClientNickname(), channel.getName());
-    std::string namreply = RPL_NAMREPLY(_serverName, client.getClientNickname(), channel.getName(), channel.getMembers());
+    std::string namreply = RPL_NAMREPLY(_serverName, client.getClientNickname(), channel);
     std::string endofnames = RPL_ENDOFNAMES(_serverName, client.getClientNickname(), channel.getName());
     client.getBufOUT() += topic + namreply + endofnames;
     return ;
@@ -727,7 +730,7 @@ void    Server::JOIN(Client & client_temp, std::vector<std::string> & args, std:
         if (parseJoinCommand(*this, client_temp, it->first) == 1)
             continue;
         if (!ChannelExist(it->first))
-            createChannel(_channelDB, it->first, it->second);
+            createChannel(_channelDB, it->first, it->second, client_temp.getClientNickname());
         else    
         {
             if (isAlreadyOnTheChannel(it->first, client_temp.getClientNickname()))
@@ -752,7 +755,6 @@ void    Server::JOIN(Client & client_temp, std::vector<std::string> & args, std:
         joinChannel(client_temp, _channelDB.at(it->first));
         joinReply(client_temp, _channelDB.at(it->first)); 
     }
-
 }
 
 
@@ -830,11 +832,34 @@ void Server::TOPIC(Client &  client_temp, std::vector<std::string> & args) {
     }
 }
 
-
-// void    Server::KICK(Channel & channel, std::string const & name)
-// {
-
-// }
+/********* KICK **********/
+void    Server::KICK(Client & client, std::string const & cmd, std::vector<std::string> const & args)
+{
+    if (args.size() < 2)
+    {
+        client.getBufOUT() = ERR_NEEDMOREPARAMS(_serverName, client.getClientNickname(), cmd);
+        return ;
+    }
+    if (ChannelExist(args[0]))
+    {
+        Channel channel = _channelDB.at(args[0]);
+        if (channel.isOperator(client.getClientNickname()))
+        {
+            if (channel.getMembers().find(args[1]) != channel.getMembers().end())
+            {
+                channel.getMembers().erase(args[1]);
+                if (channel.isOperator(args[1]))
+                    channel.eraseOperator(args[1]);
+            }
+            else
+                client.getBufOUT() = ERR_NOTONCHANNEL(_serverName, client.getClientNickname(), cmd);
+        }
+        else
+            client.getBufOUT() = ERR_CHANOPRIVSNEEDED(_serverName, client.getClientNickname(), cmd);
+    }
+    else
+        client.getBufOUT() = ERR_NOSUCHCHANNEL(_serverName, client.getClientNickname(), cmd);
+}
 
 /********* MODE *********/
 

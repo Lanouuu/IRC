@@ -60,13 +60,15 @@ std::string MY_RPL_TOPIC(const std::string & server, const std::string & nick, c
     return (buf); 
 }
 
-std::string RPL_NAMREPLY(const std::string & server, const std::string & nick, const std::string & arg, std::map<std::string, Client> const & members)
+std::string RPL_NAMREPLY(const std::string & server, const std::string & nick, Channel const & channel)
 {
     std::string buf;
     
-    buf = ":" + server + " 353 " + nick + " = " + arg + " :";
-    for (std::map<std::string, Client>::const_iterator it = members.begin(); it != members.end(); it++)
+    buf = ":" + server + " 353 " + nick + " = " + channel.getName() + " :";
+    for (std::map<std::string, Client>::const_iterator it = channel.getMembers().begin(); it != channel.getMembers().end(); it++)
     {
+        if (channel.isOperator(it->first))
+            buf += "@";
         buf += it->first + " ";
     }
     buf += "\r\n";

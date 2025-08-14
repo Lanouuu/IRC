@@ -245,7 +245,7 @@ void    Server::serverListen(void)
                         }
                         client_temp.getBufOUT().clear();
                     }
-                    checkDisconnectClient(client_temp);
+                    checkDisconnectClient();
                 }
             }
         }
@@ -310,24 +310,28 @@ void    Server::connectionReply(Client & client_temp)
             std::string myinfo = RPL_MYINFO(_serverName, client_temp.getClientNickname(), _serverVersion);
             std::string isupport = RPL_ISUPPORT(_serverName, client_temp.getClientNickname());
             client_temp.getBufOUT() = cap + welcome + yourhost + created + myinfo + isupport;
+            client_temp.getIsConnected() = true;
         }
-        client_temp.getIsConnected() = true;
     }
     return ;
 }
 
-void    Server::checkDisconnectClient(Client & client_temp)
+void    Server::checkDisconnectClient(void)
 {
-    (void)client_temp;
-    for (client_map::iterator it = _clientsDB.begin(); it != _clientsDB.end(); it++)
+    for (client_map::iterator it = _clientsDB.begin(); it != _clientsDB.end();)
     {
+        
         if (it->second.getDisconnectClient())
         {
             std::cout << BLUE << "Client déconnecté : " << it->second.getSocket() << END << std::endl;
             close(it->second.getSocket());
             FD_CLR(it->second.getSocket(), &_masterSet);
-            _clientsDB.erase(it->second.getSocket());
+            client_map::iterator temp = it;
+            it++;
+            _clientsDB.erase(temp);
         }
+        else
+            it++;
     }
     return ;
 }
@@ -572,14 +576,14 @@ void    Server::USER(Client &  client_temp, std::string & cmd, std::vector<std::
     std::string mode = args[1];
     std::string unused = args[2];
     std::string realname;
-    if (args[4][0] == ':')
+    if (args[3][0] == ':')
     {
-        realname = args[4].substr(1);
-        for (size_t i = 5; i < args.size(); i++)
+        realname = args[3].substr(1);
+        for (size_t i = 4; i < args.size(); i++)
             realname += " " + args[i];
     } 
     else 
-        realname = args[4];
+        realname = args[3];
     client_temp.setClientUserName(username);
     if (realname.empty())
         realname = "Unknown";

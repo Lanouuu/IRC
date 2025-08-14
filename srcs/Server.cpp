@@ -815,7 +815,7 @@ void Server::TOPIC(Client &  client_temp, std::vector<std::string> & args) {
                     oss << args[i];
                 }
                 std::string subject = oss.str();
-                it->second.setSubject(args[1]);
+                it->second.setSubject(subject);
                 it->second.broadcast(MY_RPL_TOPIC(_serverName, client_temp.getClientNickname(), client_temp.getClientUsername(), channel, it->second.getTopic()));
                 return;
             }

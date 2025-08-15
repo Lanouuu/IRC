@@ -278,6 +278,13 @@ std::string ERR_NOSUCHNICK(const std::string & server, const std::string & nick,
     return (buf);
 }
 
+std::string ERR_INVALIDMODEPARAM(const std::string & server, const std::string & nick, const std::string channel, const std::string & mode, const std::string & args)
+{
+    std::string buf = ":" + server + " 696 " + nick + " " + channel + " " + mode + " " + args + " :Invalid mode parameters" + "\r\n";
+    return (buf);
+}
+
+
 /****************************************************************************/
 /*                              OTHERS REPLIES                              */
 /****************************************************************************/

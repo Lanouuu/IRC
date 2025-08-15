@@ -22,10 +22,11 @@ void signal_handler(int s)
 
 size_t  stringToSizeT(std::string toCast)
 {
-    size_t value = 0;
-
-    std::stringstream ss(toCast);
-    ss >> value;
-
+    if (toCast.find_first_not_of("0123456789") != std::string::npos || toCast.empty())
+        return (0);
+    errno = 0;
+    size_t value = strtoul(toCast.c_str(), NULL, 10);
+    if (errno == ERANGE)
+        return (0);
     return value;
 }

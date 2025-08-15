@@ -34,7 +34,6 @@ Server::~Server(void)
 {
     if (_serverSocket != -1)
         close(_serverSocket);
-    // clearDBclients();
     return ;
 }
 
@@ -919,6 +918,7 @@ void    Server::KICK(Client & client, std::string const & cmd, std::vector<std::
         client.getBufOUT() = ERR_NOSUCHCHANNEL(_serverName, client.getClientNickname(), cmd);
 }
 
+
 /********* MODE *********/
 
 
@@ -1032,7 +1032,13 @@ bool    Server::execMode(Client & client_temp, Channel & channel, std::string & 
         {
             if(args.size() > j)
             {
-                channel.setLimit(actualSign, stringToSizeT(args[j]));
+                size_t len;
+                if ((len = stringToSizeT(args[j])) == 0)
+                {
+                    client_temp.getBufOUT() = ERR_INVALIDMODEPARAM(_serverName, client_temp.getClientNickname(), channelName, actualSign + 'l', args[j]);
+                    return (false);
+                }
+                channel.setLimit(actualSign, len);
                 channel.broadcast(MODE_REPLY(client_temp.getClientNickname(), channel.getName(), actualSign + 'l', args[j]));
                 ++j;
             }
@@ -1087,7 +1093,9 @@ void    Server::MODE(Client & client_temp, std::string & cmd, std::vector<std::s
            return ;
 }
 
+
 /********* PART *********/
+
 
 void Server::PART(Client &  client_temp, std::vector<std::string> & args) {
     std::cout << BLUE "PART COMMAND" END << std::endl;
@@ -1170,7 +1178,9 @@ void Server::PART(Client &  client_temp, std::vector<std::string> & args) {
     }
 }
 
+
 /********* LIST *********/
+
 
 void Server::LIST(Client &  client_temp) {
     std::stringstream ss;
@@ -1191,7 +1201,9 @@ void Server::LIST(Client &  client_temp) {
     client_temp.getBufOUT() += ss.str();
 }
 
+
 /********* INVITE *********/
+
 
 bool Server::clientExist(std::string & nick) {
     for (std::map<int, Client>::iterator it = getClientsDB().begin(); it != getClientsDB().end(); ++it) {

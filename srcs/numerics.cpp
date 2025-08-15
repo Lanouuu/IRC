@@ -93,6 +93,12 @@ std::string RPL_PART(const std::string & server, const std::string & nick, const
     return (buf); 
 }
 
+std::string RPL_INVITING(const std::string & server, const std::string & nick, const std::string & target, const std::string & chan)
+{
+    std::string buf = ":" + server + " 341 " + nick + " " + target + " " + chan + "\r\n";
+    return (buf);
+}
+
 /****************************************************************************/
 /*                              ERR Numerics                                */
 /****************************************************************************/
@@ -266,6 +272,11 @@ std::string ERR_USERNOTINCHANNEL(const std::string & server, const std::string &
     return (buf);
 }
 
+std::string ERR_NOSUCHNICK(const std::string & server, const std::string & nick, const std::string & target)
+{
+    std::string buf = ":" + server + " 401 " + nick + " " + target + " :No such nick/channel" + "\r\n";
+    return (buf);
+}
 
 /****************************************************************************/
 /*                              OTHERS REPLIES                              */

@@ -37,11 +37,13 @@ class   Server
         client_map &        getClientsDB(void);
         const client_map &  getClientsDB(void) const;
         const channel_map & getChannelDB(void) const;
+        channel_map &       getChannelDB(void);
         std::string         getServerName(void) const;
         
         void                serverListen(void);
         void                clearServer(void);
         void                printClientsList(void) const;
+        bool                clientExist(std::string & nick);
 
     private:
     
@@ -91,6 +93,8 @@ class   Server
         void                KICK(Client & client, std::string const & cmd, std::vector<std::string> const & args);
         void                PART(Client &  client_temp, std::vector<std::string> & args);
         void                LIST(Client &  client_temp);
+        void                INVITE(Client &  client_temp, std::vector<std::string> & args);
+
         bool                ChannelExist(std::string const & name) const;
         bool                hasDuplicates(std::string str, char c, int pos);
         bool                checkModeStr(Client & client_temp, std::string & modeString);

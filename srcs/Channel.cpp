@@ -224,3 +224,29 @@ void    Channel::addOperator(std::string const & name)
 {
     _operators.push_back(name);
 }
+
+void    Channel::addInvite(std::string const & name)
+{
+    _inviteList.push_back(name);
+}
+
+void    Channel::eraseInvite(std::string const & name)
+{
+    std::vector<std::string>::iterator it = std::find(_inviteList.begin(), _inviteList.end(), name);
+    if(it != _inviteList.end())
+        _inviteList.erase(it);
+    else
+    {
+        std::cout << RED "Invite person to delet not found in _inviteList" END << std::endl;
+        return ;
+    }
+}
+
+bool    Channel::isInvite(std::string const & name)
+{
+    std::vector<std::string>::iterator it = std::find(_inviteList.begin(), _inviteList.end(), name);
+    if(it != _inviteList.end())
+        return true;
+    else
+        return false;
+}

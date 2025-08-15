@@ -43,11 +43,17 @@ class   Channel
         void                eraseMember(Client & client);
         void                addOperator(std::string const & name);
         void                eraseOperator(std::string const & name);
+
+        void                addInvite(std::string const & name);
+        void                eraseInvite(std::string const & name);
+        bool                isInvite(std::string const & name);
+
         std::vector<std::string>::iterator findOperator(std::string const & name);
 
     private:
         std::map<std::string, Client>   _members;
         std::vector<std::string>        _operators;
+        std::vector<std::string>        _inviteList;
         std::vector<std::pair<std::string, std::string> >        _banList;
         std::string                     _password;
         std::string                     _subject;

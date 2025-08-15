@@ -78,6 +78,11 @@ const channel_map    &Server::getChannelDB(void) const
     return (this->_channelDB);
 }
 
+channel_map    &Server::getChannelDB(void)
+{
+    return (this->_channelDB);
+}
+
 std::string Server::getServerName(void) const
 {
     return (this->_serverName);
@@ -429,6 +434,8 @@ int    Server::execCMD(Client & client_temp, std::string & req)
         PART(client_temp, args);
     else if (cmd == "LIST")
         LIST(client_temp);
+    else if (cmd == "INVITE")
+        INVITE(client_temp, args);
     else
         client_temp.getBufOUT() = ERR_UNKNOWNCOMMAND(_serverName, client_temp.getClientNickname(), cmd);
     return (0);
@@ -1182,4 +1189,75 @@ void Server::LIST(Client &  client_temp) {
     }
     ss << _serverName + " 323 " + client_temp.getClientNickname() +  " :End of LIST\r\n";
     client_temp.getBufOUT() += ss.str();
+}
+
+/********* INVITE *********/
+
+bool Server::clientExist(std::string & nick) {
+    for (std::map<int, Client>::iterator it = getClientsDB().begin(); it != getClientsDB().end(); ++it) {
+        if (it->second.getClientNickname() == nick) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void Server::INVITE(Client &  client_temp, std::vector<std::string> & args) {
+    std::cout << BLUE "INVITE COMMAND" END << std::endl;
+    if(args.empty() || args.size() != 2)
+    {
+        client_temp.getBufOUT() = ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), client_temp.getClientUsername());
+        return;
+    }
+    std::string channel = args[1], invited = args[0];
+    if(clientExist(invited) == false)
+    {
+        client_temp.getBufOUT() = ERR_NOSUCHNICK(_serverName, client_temp.getClientNickname(), invited);
+        return ;
+    }
+    if(ChannelExist(channel))
+    {
+        if(!isAlreadyOnTheChannel(channel, client_temp.getClientNickname()))
+        {
+            client_temp.getBufOUT() = ERR_NOTONCHANNEL(_serverName, client_temp.getClientNickname(), channel);
+            return ;
+        }
+        if(this->getChannelDB().find(channel)->second.isInviteOnly())
+        {
+            if(this->getChannelDB().find(channel)->second.isOperator(invited))
+            {
+                if(isAlreadyOnTheChannel(channel, invited))
+                {
+                    client_temp.getBufOUT() = ERR_USERONCHANNEL(_serverName, client_temp.getClientNickname(), channel);
+                    return ;
+                }
+                else
+                {
+                    this->getChannelDB().find(channel)->second.addInvite(invited);
+                    client_temp.getBufOUT() = RPL_INVITING(_serverName, client_temp.getClientNickname(), invited, channel);
+                    return ;
+                }
+            }
+            else
+                client_temp.getBufOUT() = ERR_INVITEONLYCHAN(_serverName, client_temp.getClientNickname(), channel);
+        }
+        else
+        {
+            if(isAlreadyOnTheChannel(channel, invited))
+            {
+                client_temp.getBufOUT() = ERR_USERONCHANNEL(_serverName, client_temp.getClientNickname(), channel);
+                return ;
+            }
+            else
+            {
+                this->getChannelDB().find(channel)->second.addInvite(invited);
+                client_temp.getBufOUT() = RPL_INVITING(_serverName, client_temp.getClientNickname(), invited, channel);
+                return ;
+            }
+        }
+    }
+    else {
+        client_temp.getBufOUT() = ERR_NOSUCHCHANNEL(_serverName, client_temp.getClientNickname(), channel);
+        return ;
+    } 
 }

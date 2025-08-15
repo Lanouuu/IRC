@@ -23,6 +23,7 @@ std::string MY_RPL_TOPIC(const std::string & server, const std::string & nick, c
 std::string RPL_NAMREPLY(const std::string & server, const std::string & nick, Channel const & channel);
 std::string RPL_ENDOFNAMES(const std::string & server, const std::string & nick, const std::string & arg);
 std::string RPL_PART(const std::string & server, const std::string & nick, const std::string & user, const std::string & chan, const std::string & reason);
+std::string RPL_INVITING(const std::string & server, const std::string & nick, const std::string & target, const std::string & chan);
 
 /********* ERR Numerics *********/
 
@@ -45,6 +46,7 @@ std::string ERR_NOTONCHANNEL(const std::string & server, const std::string & nic
 std::string ERR_CHANOPRIVSNEEDED(const std::string & server, const std::string & nick, const std::string & arg);
 std::string ERR_UNKNOWNMODE(const std::string & server, const std::string & nick, const std::string & mode);
 std::string ERR_USERNOTINCHANNEL(const std::string & server, const std::string & nick, const std::string & args, const std::string & channel);
+std::string ERR_NOSUCHNICK(const std::string & server, const std::string & nick, const std::string & target);
 
 /********* Others Replies *********/
 

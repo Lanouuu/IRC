@@ -284,6 +284,18 @@ std::string ERR_INVALIDMODEPARAM(const std::string & server, const std::string &
     return (buf);
 }
 
+std::string ERR_NORECIPIENT(const std::string & server, const std::string & nick, const std::string & cmd)
+{
+    std::string buf = ":" + server + " 411 " + nick + " :No recipient given " + cmd + "\r\n";
+    return (buf);
+}
+
+std::string ERR_NOTEXTTOSEND(const std::string & server, const std::string & nick)
+{
+    std::string buf = ":" + server + " 412 " + nick + " :No text to send" + "\r\n";
+    return (buf);
+}
+
 
 /****************************************************************************/
 /*                              OTHERS REPLIES                              */
@@ -307,5 +319,11 @@ std::string KICK_REPLY(const std::string & server, const std::string &nick, cons
     if (!args.empty())
         buf += " :" + args;
     buf += "\r\n";
+    return (buf);
+}
+
+std::string PRIVMSG_REPLY(const std::string & nick, const std::string & target, const std::string & message)
+{
+    std::string buf = ":" + nick + " PRIVMSG " + target + " :" + message + "\r\n";
     return (buf);
 }

@@ -94,6 +94,7 @@ class   Server
         void                PART(Client &  client_temp, std::vector<std::string> & args);
         void                LIST(Client &  client_temp);
         void                INVITE(Client &  client_temp, std::vector<std::string> & args);
+        void                PRIVMSG(Client & client_temp, std::string & cmd, std::vector<std::string> & args);
 
         bool                ChannelExist(std::string const & name) const;
         bool                hasDuplicates(std::string str, char c, int pos);
@@ -101,6 +102,10 @@ class   Server
         bool                checkChannel(Client & client_temp, std::string & channelName, std::string & modeString, std::string & cmd);
         bool                execMode(Client & client_temp, Channel & channel, std::string & modeString, std::string & channelName, std::vector<std::string> & args);
         bool                isAlreadyOnTheChannel(std::string const & name, std::string const & nickname) const;
+        void                parseTargets(std::string & targetsStr, std::vector<std::string> & targets);
+        void                parseMessage(std::vector<std::string> & args, std::string & message);
+        void                sendToChannel(Client & client_temp, std::string & target, std::string & message);
+        void                sendToUser(Client & client_temp, std::string & target, std::string & message);         
 };
   
 #endif

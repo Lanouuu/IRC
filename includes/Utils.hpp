@@ -6,11 +6,12 @@
 # define BLUE	"\033[0;36m"
 # define END	"\033[0m"
 
-#include <signal.h>
-#include <iostream>
-#include <sstream>
-#include <errno.h>
-#include <cstdlib>
+# include <signal.h>
+# include <iostream>
+# include <sstream>
+# include <cstdlib>
+# include <errno.h>
+
 extern sig_atomic_t stop;
 
 void    signal_handler(int s);

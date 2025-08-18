@@ -264,15 +264,21 @@ void    Server::serverListen(void)
                     Client & client_temp = _clientsDB[socket];
                     readClient(client_temp, socket);
                     connectionReply(client_temp);
-                    if (!client_temp.getBufOUT().empty())
+                    std::cout << RED "CLIENT USERNAME = " << client_temp.getClientUsername() << END << std::endl;
+                    std::cout << RED "CLIENT REALNAME = " << client_temp.getClientRealname() << END << std::endl;
+                    for (std::map<int, Client>::iterator it = _clientsDB.begin(); it != _clientsDB.end(); ++it) 
                     {
-                        std::cout << BLUE << "TO SEND = " << client_temp.getBufOUT() << END << std::endl;
-                        if (send(socket, client_temp.getBufOUT().c_str(), client_temp.getBufOUT().size(), 0) == -1)
+                        Client &    cl = it->second;
+                        if (!cl.getBufOUT().empty()) 
                         {
-                            client_temp.getDisconnectClient();
-                            std::cerr << RED "Error: send" END << std::endl;
+                            std::cout << BLUE << "TO SEND = " << cl.getBufOUT() << END << std::endl;
+                            if (send(cl.getSocket(), cl.getBufOUT().c_str(), cl.getBufOUT().size(), 0) == -1)
+                            {
+                                cl.getDisconnectClient();
+                                std::cerr << RED "Error: send" END << std::endl;
+                            }
+                            cl.getBufOUT().clear();
                         }
-                        client_temp.getBufOUT().clear();
                     }
                     checkDisconnectClient();
                 }
@@ -338,7 +344,7 @@ void    Server::connectionReply(Client & client_temp)
             std::string created = RPL_CREATED(_serverName, client_temp.getClientNickname(), _serverDate);
             std::string myinfo = RPL_MYINFO(_serverName, client_temp.getClientNickname(), _serverVersion);
             std::string isupport = RPL_ISUPPORT(_serverName, client_temp.getClientNickname());
-            client_temp.getBufOUT() = cap + welcome + yourhost + created + myinfo + isupport;
+            client_temp.getBufOUT() += cap + welcome + yourhost + created + myinfo + isupport;
             client_temp.getIsConnected() = true;
         }
     }
@@ -381,7 +387,7 @@ void    Server::readClient(Client & client_temp, int socket_fd)
     else if (bytes == -1)
     {
         client_temp.getDisconnectClient() = true;
-        client_temp.getBufOUT() = ERR_UNKNOWNERROR(_serverName, client_temp.getClientNickname(), "", "Server Internal Error -> recv()");
+        client_temp.getBufOUT() += ERR_UNKNOWNERROR(_serverName, client_temp.getClientNickname(), "", "Server Internal Error -> recv()");
     }
     else
     {
@@ -424,7 +430,7 @@ int    Server::execCMD(Client & client_temp, std::string & req)
     if (client_temp.getNbCmd() == 0 && cmd != "PASS")
     {
         client_temp.setDisconnectClient(true);
-        client_temp.getBufOUT() = ERR_PASSWDMISMATCH(_serverName);
+        client_temp.getBufOUT() += ERR_PASSWDMISMATCH(_serverName);
         return (-1);
     }
     if (cmd == "PASS")
@@ -454,8 +460,10 @@ int    Server::execCMD(Client & client_temp, std::string & req)
         LIST(client_temp);
     else if (cmd == "INVITE")
         INVITE(client_temp, args);
+    else if (cmd == "PRIVMSG")
+        PRIVMSG(client_temp, cmd, args);
     else
-        client_temp.getBufOUT() = ERR_UNKNOWNCOMMAND(_serverName, client_temp.getClientNickname(), cmd);
+        client_temp.getBufOUT() += ERR_UNKNOWNCOMMAND(_serverName, client_temp.getClientNickname(), cmd);
     return (0);
 }
 
@@ -527,19 +535,19 @@ int    Server::PASS(Client &  client_temp, std::string & cmd, std::vector<std::s
 {
     if (client_temp.getIsPass())
     {
-        client_temp.getBufOUT() = ERR_ALREADYREGISTERED(_serverName, client_temp.getClientNickname());
+        client_temp.getBufOUT() += ERR_ALREADYREGISTERED(_serverName, client_temp.getClientNickname());
         return (0);
     }
     if (args.empty())
     {
         client_temp.getDisconnectClient() = true;
-        client_temp.getBufOUT() = ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), cmd);
+        client_temp.getBufOUT() += ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), cmd);
         return (-1);
     }
     if (args[0] != _serverPassword)
     {
         client_temp.getDisconnectClient() = true;
-        client_temp.getBufOUT() = ERR_PASSWDMISMATCH(_serverName);
+        client_temp.getBufOUT() += ERR_PASSWDMISMATCH(_serverName);
         return (-1);
     }
     client_temp.getIsPass() = true;
@@ -567,19 +575,19 @@ void    Server::NICK(Client &  client_temp, std::vector<std::string> & args)
 {
     if (args.empty())
     {
-        client_temp.getBufOUT() = ERR_NONICKNAMEGIVEN(_serverName, client_temp.getClientNickname(), client_temp.getClientUsername());
+        client_temp.getBufOUT() += ERR_NONICKNAMEGIVEN(_serverName, client_temp.getClientNickname(), client_temp.getClientUsername());
         return ;
     }
     if (checkNickFormat(args[0]) == 1)
     {
-        client_temp.getBufOUT() = ERR_ERRONEUSNICKNAME(_serverName, args[0], client_temp.getClientUsername());
+        client_temp.getBufOUT() += ERR_ERRONEUSNICKNAME(_serverName, args[0], client_temp.getClientUsername());
         return ;
     }
     for (client_map::iterator it = _clientsDB.begin(); it != _clientsDB.end(); it++)
     {
         if (args[0] == it->second.getClientNickname())
         {
-            client_temp.getBufOUT() = ERR_NICKNAMEINUSE(_serverName, args[0], client_temp.getClientUsername());
+            client_temp.getBufOUT() += ERR_NICKNAMEINUSE(_serverName, args[0], client_temp.getClientUsername());
             return ;
         }
     }
@@ -595,12 +603,12 @@ void    Server::USER(Client &  client_temp, std::string & cmd, std::vector<std::
 {
     if (!client_temp.getClientUsername().empty())
     {
-        client_temp.getBufOUT() = ERR_ALREADYREGISTERED(_serverName, client_temp.getClientNickname());
+        client_temp.getBufOUT() += ERR_ALREADYREGISTERED(_serverName, client_temp.getClientNickname());
         return ;
     }
     if (args.size() < 4 || args[0].empty() || args[0].find_first_of(" @!") != std::string::npos)
     {
-        client_temp.getBufOUT() = ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), cmd);
+        client_temp.getBufOUT() += ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), cmd);
         return ;
     }
     std::string username;
@@ -634,7 +642,7 @@ void    Server::QUIT(Client & client_temp)
 {
     if (!client_temp.getIsConnected())
     {
-        client_temp.getBufOUT() = ERR_NOTREGISTERED(_serverName, client_temp.getClientNickname());
+        client_temp.getBufOUT() += ERR_NOTREGISTERED(_serverName, client_temp.getClientNickname());
         return ;
     }
     client_temp.getDisconnectClient() = true;
@@ -649,20 +657,20 @@ void    Server::PONG(Client &  client_temp, std::string & cmd, std::vector<std::
 {
     if (args.empty())
     {
-        client_temp.getBufOUT() = ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), cmd);
+        client_temp.getBufOUT() += ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), cmd);
         return ;
     }
     if (!client_temp.getIsConnected())
     {
-        client_temp.getBufOUT() = ERR_NOTREGISTERED(_serverName, client_temp.getClientNickname());
+        client_temp.getBufOUT() += ERR_NOTREGISTERED(_serverName, client_temp.getClientNickname());
         return ;
     }
     if (args.empty())
     {
-        client_temp.getBufOUT() = ERR_NOORIGIN(_serverName, client_temp.getClientNickname());
+        client_temp.getBufOUT() += ERR_NOORIGIN(_serverName, client_temp.getClientNickname());
         return ;
     }
-    client_temp.getBufOUT() = "PONG " + args[0] + "\r\n";
+    client_temp.getBufOUT() += "PONG " + args[0] + "\r\n";
     return ;
 }
 
@@ -718,18 +726,18 @@ static int parseJoinCommand(Server const & server, Client & client, std::string 
 {
     if (arg[0] != '#')
     {
-        client.getBufOUT() = ERR_NOSUCHCHANNEL(server.getServerName(), client.getClientNickname(), arg);
+        client.getBufOUT() += ERR_NOSUCHCHANNEL(server.getServerName(), client.getClientNickname(), arg);
         return 1;
     }
     if (arg.size() == 1)
     {
-        client.getBufOUT() = ERR_BADCHANMASK(server.getServerName(), client.getClientNickname(), arg) + client.getClientNickname() + "!" + client.getClientUsername() + "@localhost " + "PART " + arg + " :bye" + "\r\n";
+        client.getBufOUT() += ERR_BADCHANMASK(server.getServerName(), client.getClientNickname(), arg) + client.getClientNickname() + "!" + client.getClientUsername() + "@localhost " + "PART " + arg + " :bye" + "\r\n";
         return 1;
     }
     if (ParseChannelName(arg) == 1)
     {
         std::cout << RED << "ARG = " << arg << END << std::endl;
-        client.getBufOUT() = ERR_BADCHANMASK(server.getServerName(), client.getClientNickname(), arg) + client.getClientNickname() + "!" + client.getClientUsername() + "@localhost " + "PART " + arg + " :bye" + "\r\n";
+        client.getBufOUT() += ERR_BADCHANMASK(server.getServerName(), client.getClientNickname(), arg) + client.getClientNickname() + "!" + client.getClientUsername() + "@localhost " + "PART " + arg + " :bye" + "\r\n";
         return 1;
     }
     return 0;
@@ -774,7 +782,7 @@ void    Server::JOIN(Client & client_temp, std::vector<std::string> & args, std:
 {
     if (args.size() == 0)
     {
-        client_temp.getBufOUT() = ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), cmd);
+        client_temp.getBufOUT() += ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), cmd);
         return ;
     }
     std::vector<std::pair<std::string, std::string> > channels;
@@ -829,19 +837,19 @@ void Server::TOPIC(Client &  client_temp, std::vector<std::string> & args) {
     if(args.empty())
     {
         std::cout << "ici 696" << std::endl;
-        client_temp.getBufOUT() = ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), client_temp.getClientUsername());
+        client_temp.getBufOUT() += ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), client_temp.getClientUsername());
         return;
     }
     std::string channel = args[0];
     if(ChannelExist(channel)) {
         if (channel[0] != '#')
         {
-            client_temp.getBufOUT() = ERR_NOSUCHCHANNEL(_serverName, client_temp.getClientNickname(), channel);
+            client_temp.getBufOUT() += ERR_NOSUCHCHANNEL(_serverName, client_temp.getClientNickname(), channel);
             return;
         }
         if(!isAlreadyOnTheChannel(channel, client_temp.getClientNickname()))
         {
-            client_temp.getBufOUT() = ERR_NOTONCHANNEL(_serverName, client_temp.getClientNickname(), channel);
+            client_temp.getBufOUT() += ERR_NOTONCHANNEL(_serverName, client_temp.getClientNickname(), channel);
             return;
         }
         if(args.size() == 1 && isAlreadyOnTheChannel(channel, client_temp.getClientNickname()))
@@ -849,19 +857,19 @@ void Server::TOPIC(Client &  client_temp, std::vector<std::string> & args) {
             if(!this->_channelDB.at(channel).getTopic().empty())
             {
                 std::cout << "ici 713" << std::endl;
-                client_temp.getBufOUT() = RPL_TOPIC(_serverName, client_temp.getClientNickname(), channel, this->_channelDB.at(channel).getTopic());
+                client_temp.getBufOUT() += RPL_TOPIC(_serverName, client_temp.getClientNickname(), channel, this->_channelDB.at(channel).getTopic());
                 return;
             }
             else
             {
                 std::cout << "ici 721" << std::endl;
-                client_temp.getBufOUT() = RPL_NOTOPIC(_serverName, client_temp.getClientNickname(), channel);
+                client_temp.getBufOUT() += RPL_NOTOPIC(_serverName, client_temp.getClientNickname(), channel);
                 return;
             }
         }
         std::map<std::string, Channel>::iterator it = this->_channelDB.find(channel);
         if(it == _channelDB.end()) {
-            client_temp.getBufOUT() = ERR_NOSUCHCHANNEL(_serverName, client_temp.getClientNickname(), channel);
+            client_temp.getBufOUT() += ERR_NOSUCHCHANNEL(_serverName, client_temp.getClientNickname(), channel);
             return;
         }
         if(args.size() > 1 && !args[1].empty())
@@ -882,7 +890,7 @@ void Server::TOPIC(Client &  client_temp, std::vector<std::string> & args) {
             }
             else
             {
-                client_temp.getBufOUT() = ERR_CHANOPRIVSNEEDED(_serverName, client_temp.getClientNickname(), channel);
+                client_temp.getBufOUT() += ERR_CHANOPRIVSNEEDED(_serverName, client_temp.getClientNickname(), channel);
                 return;
             }
         }
@@ -896,13 +904,13 @@ void Server::TOPIC(Client &  client_temp, std::vector<std::string> & args) {
                 it->second.broadcast(MY_RPL_TOPIC(_serverName, client_temp.getClientNickname(), client_temp.getClientUsername(), channel, it->second.getTopic())); 
             }
             else
-                client_temp.getBufOUT() = ERR_CHANOPRIVSNEEDED(_serverName, client_temp.getClientNickname(), channel);
+                client_temp.getBufOUT() += ERR_CHANOPRIVSNEEDED(_serverName, client_temp.getClientNickname(), channel);
         }
     }
     else
     {
         std::cout << "ici 746" << std::endl;
-        client_temp.getBufOUT() = ERR_NOSUCHCHANNEL(_serverName, client_temp.getClientNickname(), channel);
+        client_temp.getBufOUT() += ERR_NOSUCHCHANNEL(_serverName, client_temp.getClientNickname(), channel);
     }
 }
 
@@ -914,7 +922,7 @@ void    Server::KICK(Client & client, std::string const & cmd, std::vector<std::
 {
     if (args.size() < 2)
     {
-        client.getBufOUT() = ERR_NEEDMOREPARAMS(_serverName, client.getClientNickname(), cmd);
+        client.getBufOUT() += ERR_NEEDMOREPARAMS(_serverName, client.getClientNickname(), cmd);
         return ;
     }
     if (ChannelExist(args[0]))
@@ -935,13 +943,13 @@ void    Server::KICK(Client & client, std::string const & cmd, std::vector<std::
                     _channelDB.erase(args[0]);
             }
             else
-                client.getBufOUT() = ERR_NOTONCHANNEL(_serverName, args[1], cmd);
+                client.getBufOUT() += ERR_NOTONCHANNEL(_serverName, client.getClientNickname(), cmd);
         }
         else
-            client.getBufOUT() = ERR_CHANOPRIVSNEEDED(_serverName, client.getClientNickname(), cmd);
+            client.getBufOUT() += ERR_CHANOPRIVSNEEDED(_serverName, client.getClientNickname(), cmd);
     }
     else
-        client.getBufOUT() = ERR_NOSUCHCHANNEL(_serverName, client.getClientNickname(), cmd);
+        client.getBufOUT() += ERR_NOSUCHCHANNEL(_serverName, client.getClientNickname(), cmd);
 }
 
 
@@ -959,22 +967,22 @@ bool Server::checkChannel(Client & client_temp, std::string & channelName, std::
 {
     if (channelName.empty() || modeString.empty())
     {
-        client_temp.getBufOUT() = ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), cmd);
+        client_temp.getBufOUT() += ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), cmd);
         return (false);
     }
     if (channelName[0] != '#')
     {
-        client_temp.getBufOUT() = ":" + _serverName + " :MODE for user is not supported" + "\r\n";
+        client_temp.getBufOUT() += ":" + _serverName + " :MODE for user is not supported" + "\r\n";
         return (false);
     }
     if (!ChannelExist(channelName))
     {
-        client_temp.getBufOUT() = ERR_NOSUCHCHANNEL(_serverName, client_temp.getClientNickname(), channelName);
+        client_temp.getBufOUT() += ERR_NOSUCHCHANNEL(_serverName, client_temp.getClientNickname(), channelName);
         return (false);
     }
     if (!isAlreadyOnTheChannel(channelName, client_temp.getClientNickname()))
     {
-        client_temp.getBufOUT() = ERR_NOTONCHANNEL(_serverName, client_temp.getClientNickname(), channelName);
+        client_temp.getBufOUT() += ERR_NOTONCHANNEL(_serverName, client_temp.getClientNickname(), channelName);
         return (false);
     }
     return (true);
@@ -984,12 +992,12 @@ bool Server::checkModeStr(Client & client_temp, std::string & modeString)
 {
     if (modeString.find_first_not_of("+-itkol") != std::string::npos)
     {
-        client_temp.getBufOUT() = ERR_UNKNOWNMODE(_serverName, client_temp.getClientNickname(), modeString);
+        client_temp.getBufOUT() += ERR_UNKNOWNMODE(_serverName, client_temp.getClientNickname(), modeString);
         return (false);
     }
     if (isalpha(modeString[0]) || !isalpha(modeString[modeString.size() - 1]))
     {
-        client_temp.getBufOUT() = ERR_UNKNOWNMODE(_serverName, client_temp.getClientNickname(), modeString);
+        client_temp.getBufOUT() += ERR_UNKNOWNMODE(_serverName, client_temp.getClientNickname(), modeString);
         return (false);
     }
     for (std::size_t i = 0; i < modeString.size(); i++)
@@ -998,7 +1006,7 @@ bool Server::checkModeStr(Client & client_temp, std::string & modeString)
         {
             if (hasDuplicates(modeString, modeString[i], i))
             {
-                client_temp.getBufOUT() = ERR_UNKNOWNMODE(_serverName, client_temp.getClientNickname(), modeString);
+                client_temp.getBufOUT() += ERR_UNKNOWNMODE(_serverName, client_temp.getClientNickname(), modeString);
                 return (false);
             }
         }
@@ -1006,7 +1014,7 @@ bool Server::checkModeStr(Client & client_temp, std::string & modeString)
         {
             if (modeString[i + 1] == '+' || modeString[i + 1] == '-')
             {
-                client_temp.getBufOUT() = ERR_UNKNOWNMODE(_serverName, client_temp.getClientNickname(), modeString);
+                client_temp.getBufOUT() += ERR_UNKNOWNMODE(_serverName, client_temp.getClientNickname(), modeString);
                 return (false);
             }
         }
@@ -1044,13 +1052,13 @@ bool    Server::execMode(Client & client_temp, Channel & channel, std::string & 
                 }
                 else
                 {
-                    client_temp.getBufOUT() = ERR_USERNOTINCHANNEL(_serverName, client_temp.getClientNickname(), args[j], channel.getName());
+                    client_temp.getBufOUT() += ERR_USERNOTINCHANNEL(_serverName, client_temp.getClientNickname(), args[j], channel.getName());
                     return (false);
                 }
             }
             else
             {
-                client_temp.getBufOUT() = ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), "MODE");
+                client_temp.getBufOUT() += ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), "MODE");
                 return (false);
             }
         }
@@ -1061,7 +1069,7 @@ bool    Server::execMode(Client & client_temp, Channel & channel, std::string & 
                 size_t len;
                 if ((len = stringToSizeT(args[j])) == 0)
                 {
-                    client_temp.getBufOUT() = ERR_INVALIDMODEPARAM(_serverName, client_temp.getClientNickname(), channelName, actualSign + 'l', args[j]);
+                    client_temp.getBufOUT() += ERR_INVALIDMODEPARAM(_serverName, client_temp.getClientNickname(), channelName, actualSign + 'l', args[j]);
                     return (false);
                 }
                 channel.setLimit(actualSign, len);
@@ -1070,7 +1078,7 @@ bool    Server::execMode(Client & client_temp, Channel & channel, std::string & 
             }
             else
             {
-                client_temp.getBufOUT() = ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), "MODE");
+                client_temp.getBufOUT() += ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), "MODE");
                 return (false);
             }
         }
@@ -1080,7 +1088,7 @@ bool    Server::execMode(Client & client_temp, Channel & channel, std::string & 
             {
                 if (args.size() < j)
                 {
-                    client_temp.getBufOUT() = ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), "MODE");
+                    client_temp.getBufOUT() += ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), "MODE");
                     return (false);
                 }
                 channel.setPassword(actualSign, args[j]);
@@ -1100,7 +1108,7 @@ void    Server::MODE(Client & client_temp, std::string & cmd, std::vector<std::s
 {
     if (args.size() < 2)
     {
-        client_temp.getBufOUT() = ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), cmd);
+        client_temp.getBufOUT() += ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), cmd);
         return ;
     }
     std::string channelName = args[0];
@@ -1110,7 +1118,7 @@ void    Server::MODE(Client & client_temp, std::string & cmd, std::vector<std::s
     Channel & channel = _channelDB[channelName];
     if (!channel.isOperator(client_temp.getClientNickname()))
     {
-        client_temp.getBufOUT() = ERR_CHANOPRIVSNEEDED(_serverName, client_temp.getClientNickname(), channelName);
+        client_temp.getBufOUT() += ERR_CHANOPRIVSNEEDED(_serverName, client_temp.getClientNickname(), channelName);
         return ;
     }
     if (!checkModeStr(client_temp, modeString))
@@ -1128,7 +1136,7 @@ void Server::PART(Client &  client_temp, std::vector<std::string> & args) {
     if(args.empty())
     {
         std::cout << "ici 1073" << std::endl;
-        client_temp.getBufOUT() = ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), client_temp.getClientUsername());
+        client_temp.getBufOUT() += ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), client_temp.getClientUsername());
         return;
     }
     std::vector<std::string> channels;
@@ -1150,12 +1158,12 @@ void Server::PART(Client &  client_temp, std::vector<std::string> & args) {
         if(ChannelExist(channels[i])) {
             if (channels[i][0] != '#')
             {
-                client_temp.getBufOUT() = ERR_NOSUCHCHANNEL(_serverName, client_temp.getClientNickname(), channels[i]);
+                client_temp.getBufOUT() += ERR_NOSUCHCHANNEL(_serverName, client_temp.getClientNickname(), channels[i]);
                 continue ;
             }
             if(!isAlreadyOnTheChannel(channels[i], client_temp.getClientNickname()))
             {
-                client_temp.getBufOUT() = ERR_NOTONCHANNEL(_serverName, client_temp.getClientNickname(), channels[i]);
+                client_temp.getBufOUT() += ERR_NOTONCHANNEL(_serverName, client_temp.getClientNickname(), channels[i]);
                 continue ;
             }
 
@@ -1199,7 +1207,7 @@ void Server::PART(Client &  client_temp, std::vector<std::string> & args) {
         }
         else {
             std::cout << "ici 1091" << std::endl;
-            client_temp.getBufOUT() = ERR_NOSUCHCHANNEL(_serverName, client_temp.getClientNickname(), channels[i]);
+            client_temp.getBufOUT() += ERR_NOSUCHCHANNEL(_serverName, client_temp.getClientNickname(), channels[i]);
         }        
     }
 }
@@ -1244,20 +1252,20 @@ void Server::INVITE(Client &  client_temp, std::vector<std::string> & args) {
     std::cout << BLUE "INVITE COMMAND" END << std::endl;
     if(args.empty() || args.size() != 2)
     {
-        client_temp.getBufOUT() = ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), client_temp.getClientUsername());
+        client_temp.getBufOUT() += ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), client_temp.getClientUsername());
         return;
     }
     std::string channel = args[1], invited = args[0];
     if(clientExist(invited) == false)
     {
-        client_temp.getBufOUT() = ERR_NOSUCHNICK(_serverName, client_temp.getClientNickname(), invited);
+        client_temp.getBufOUT() += ERR_NOSUCHNICK(_serverName, client_temp.getClientNickname(), invited);
         return ;
     }
     if(ChannelExist(channel))
     {
         if(!isAlreadyOnTheChannel(channel, client_temp.getClientNickname()))
         {
-            client_temp.getBufOUT() = ERR_NOTONCHANNEL(_serverName, client_temp.getClientNickname(), channel);
+            client_temp.getBufOUT() += ERR_NOTONCHANNEL(_serverName, client_temp.getClientNickname(), channel);
             return ;
         }
         if(this->getChannelDB().find(channel)->second.isInviteOnly())
@@ -1266,7 +1274,7 @@ void Server::INVITE(Client &  client_temp, std::vector<std::string> & args) {
             {
                 if(isAlreadyOnTheChannel(channel, invited))
                 {
-                    client_temp.getBufOUT() = ERR_USERONCHANNEL(_serverName, client_temp.getClientNickname(), channel);
+                    client_temp.getBufOUT() += ERR_USERONCHANNEL(_serverName, client_temp.getClientNickname(), channel);
                     return ;
                 }
                 else
@@ -1278,25 +1286,132 @@ void Server::INVITE(Client &  client_temp, std::vector<std::string> & args) {
                 }
             }
             else
-                client_temp.getBufOUT() = ERR_INVITEONLYCHAN(_serverName, client_temp.getClientNickname(), channel);
+                client_temp.getBufOUT() += ERR_INVITEONLYCHAN(_serverName, client_temp.getClientNickname(), channel);
         }
         else
         {
             if(isAlreadyOnTheChannel(channel, invited))
             {
-                client_temp.getBufOUT() = ERR_USERONCHANNEL(_serverName, client_temp.getClientNickname(), channel);
+                client_temp.getBufOUT() += ERR_USERONCHANNEL(_serverName, client_temp.getClientNickname(), channel);
                 return ;
             }
             else
             {
-                this->getChannelDB().find(channel)->second.addInvite(client_temp);
-                client_temp.getBufOUT() = RPL_INVITING(_serverName, client_temp.getClientNickname(), invited, channel);
+                this->getChannelDB().find(channel)->second.addInvite(getClient(invited));
+                client_temp.getBufOUT() += RPL_INVITING(_serverName, client_temp.getClientNickname(), invited, channel);
                 return ;
             }
         }
     }
     else {
-        client_temp.getBufOUT() = ERR_NOSUCHCHANNEL(_serverName, client_temp.getClientNickname(), channel);
+        client_temp.getBufOUT() += ERR_NOSUCHCHANNEL(_serverName, client_temp.getClientNickname(), channel);
         return ;
     } 
+}
+
+
+/********* PRIVMSG *********/
+
+
+void    Server::parseTargets(std::string & targetsStr, std::vector<std::string> & targets)
+{
+    std::istringstream  stream(targetsStr);
+    std::string         buf;
+
+    if (targetsStr.find(',') == std::string::npos)
+    {
+        targets.push_back(targetsStr);
+        return ;
+    }
+    while (std::getline(stream, buf, ','))
+        targets.push_back(buf);
+    return ;
+}
+
+void    Server::parseMessage(std::vector<std::string> & args, std::string & message)
+{
+    if (args[1][0] == ':') 
+    {
+        message = args[1].substr(1);
+        for (size_t i = 2; i < args.size(); ++i)
+            message += " " + args[i];
+    } 
+    else
+        message = args[1];
+    return ;
+}
+
+void    Server::sendToChannel(Client & client_temp, std::string & target, std::string & message)
+{
+    if (_channelDB.find(target) == _channelDB.end())
+    {
+        client_temp.getBufOUT() += ERR_NOSUCHCHANNEL(_serverName, client_temp.getClientNickname(), target);
+        return ;
+    }
+    Channel channel_target = _channelDB[target];
+    if (!isAlreadyOnTheChannel(target, client_temp.getClientNickname()))
+    {
+        client_temp.getBufOUT() += ERR_CANNOTSENDTOCHAN(_serverName, client_temp.getClientNickname(), target);
+        return ;
+    }
+    channel_target.sendToAll(client_temp, message);
+    return ;
+}
+
+void    Server::sendToUser(Client & client_temp, std::string & target, std::string & message)
+{
+    Client  client_target;
+    int     flag = 0;
+    for (client_map::iterator it = _clientsDB.begin(); it != _clientsDB.end(); it++)
+    {
+        if (it->second.getClientNickname() == target)
+        {
+            client_target = it->second;
+            flag = 1;
+            break ;
+        }
+    }
+    if (flag == 0)
+    {
+        client_temp.getBufOUT() += ERR_NOSUCHNICK(_serverName, client_temp.getClientNickname(), target);
+        return ;
+    }
+    std::string buf = PRIVMSG_REPLY(client_temp.getClientNickname(), target, message);
+    if (send(client_target.getSocket(), buf.c_str(), buf.size(), 0) == -1)
+    {
+        std::cerr << RED "Error: send -> sendToUser(): " << target << END << std::endl;
+        _clientsDB[client_target.getSocket()].getDisconnectClient() = true;
+    }
+    return ;
+}
+
+void    Server::PRIVMSG(Client & client_temp, std::string & cmd, std::vector<std::string> & args)
+{
+    if (args.empty())
+    {
+        client_temp.getBufOUT() += ERR_NORECIPIENT(_serverName, client_temp.getClientNickname(), cmd);
+        return ;
+    }
+    if (args.size() == 1)
+    {
+        client_temp.getBufOUT() += ERR_NOTEXTTOSEND(_serverName, client_temp.getClientNickname());
+        return ;
+    }
+    std::vector<std::string>    targets;
+    std::string                 message;
+    parseTargets(args[0], targets);
+    parseMessage(args, message);
+    if (message.empty())
+    {
+        client_temp.getBufOUT() += ERR_NOTEXTTOSEND(_serverName, client_temp.getClientNickname());
+        return ;
+    }
+    for (std::vector<std::string>::iterator it = targets.begin(); it != targets.end(); it++)
+    {
+        if ((*it)[0] == '#')
+            sendToChannel(client_temp, *it, message);
+        else
+            sendToUser(client_temp, *it, message);
+    }
+    return ;
 }

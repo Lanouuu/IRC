@@ -39,7 +39,6 @@ class   Channel
         std::map<std::string, Client> & getInviteList();
 
         bool                isOperator(const std::string nick) const;
-        bool                isInvite(std::string const & name);
         bool                isOnTheBanList(std::string const & nick, std::string const & realname);
 
         void                broadcast(std::string const & message);
@@ -50,6 +49,8 @@ class   Channel
 
         void                addInvite(Client const & name);
         void                eraseInvite(std::string const & name);
+        bool                isInvite(std::string const & name);
+        void                sendToAll(Client & client_temp, std::string & message);
 
         std::vector<std::string>::iterator findOperator(std::string const & name);
 

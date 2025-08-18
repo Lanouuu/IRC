@@ -286,7 +286,25 @@ std::string ERR_NOSUCHNICK(const std::string & server, const std::string & nick,
 
 std::string ERR_INVALIDMODEPARAM(const std::string & server, const std::string & nick, const std::string channel, const std::string & mode, const std::string & args)
 {
-    std::string buf = RED ":" + server + " 696 " + nick + " " + channel + " " + mode + " " + args + " :Invalid mode parameters" END + "\r\n";
+    std::string buf = ":" + server + " 696 " + nick + " " + channel + " " + mode + " " + args + " :Invalid mode parameters" + "\r\n";
+    return (buf);
+}
+
+std::string ERR_NORECIPIENT(const std::string & server, const std::string & nick, const std::string & cmd)
+{
+    std::string buf = ":" + server + " 411 " + nick + " :No recipient given " + cmd + "\r\n";
+    return (buf);
+}
+
+std::string ERR_NOTEXTTOSEND(const std::string & server, const std::string & nick)
+{
+    std::string buf = ":" + server + " 412 " + nick + " :No text to send" + "\r\n";
+    return (buf);
+}
+
+std::string ERR_CANNOTSENDTOCHAN(const std::string & server, const std::string & nick, const std::string & channel)
+{
+    std::string buf = ":" + server + " 404 " + nick + " " + channel + " :Cannot send to channel" + "\r\n";
     return (buf);
 }
 
@@ -326,5 +344,11 @@ std::string KICK_REPLY(const std::string &nick, const std::string &username, con
     else
         buf += " kicked"; 
     buf += "\r\n";
+    return (buf);
+}
+
+std::string PRIVMSG_REPLY(const std::string & nick, const std::string & target, const std::string & message)
+{
+    std::string buf = ":" + nick + " PRIVMSG " + target + " :" + message + "\r\n";
     return (buf);
 }

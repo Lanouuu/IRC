@@ -226,7 +226,7 @@ void    Channel::broadcast(std::string const & message)
 {
     for (std::map<std::string, Client>::iterator it = _members.begin(); it != _members.end(); it++)
     {
-        it->second.getBufOUT() = message;
+        it->second.getBufOUT() += message;
         if (send(it->second.getSocket(), it->second.getBufOUT().c_str(), it->second.getBufOUT().size(), 0) == -1)
         {
             it->second.getDisconnectClient() = true;
@@ -275,4 +275,23 @@ bool    Channel::isInvite(std::string const & name)
         return true;
     else
         return false;
+}
+
+void    Channel::sendToAll(Client & client_temp, std::string & message)
+{
+    for (std::map<std::string, Client>::iterator it = _members.begin(); it != _members.end(); it++)
+    {
+        if (client_temp.getClientNickname() != it->second.getClientNickname())
+        {
+            std::string buf = PRIVMSG_REPLY(client_temp.getClientNickname(), it->second.getClientNickname(), message);
+            it->second.getBufOUT() += buf;
+            if (send(it->second.getSocket(), it->second.getBufOUT().c_str(), it->second.getBufOUT().size(), 0) == -1)
+            {
+                it->second.getDisconnectClient() = true;
+                std::cerr << RED "Error: send: sendToAll() -> " << it->second.getClientNickname() << END << std::endl;
+            }
+            it->second.getBufOUT().clear();
+        }
+    }
+    return ;
 }

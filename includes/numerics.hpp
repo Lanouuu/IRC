@@ -24,6 +24,7 @@ std::string RPL_NAMREPLY(const std::string & server, const std::string & nick, C
 std::string RPL_ENDOFNAMES(const std::string & server, const std::string & nick, const std::string & arg);
 std::string RPL_PART(const std::string & server, const std::string & nick, const std::string & user, const std::string & chan, const std::string & reason);
 std::string RPL_INVITING(const std::string & server, const std::string & nick, const std::string & target, const std::string & chan);
+std::string RPL_MY_INVITE(const std::string & server, Client & client, const std::string & target, const std::string & chan);
 
 /********* ERR Numerics *********/
 

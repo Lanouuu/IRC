@@ -98,6 +98,16 @@ const Client &    Server::getClient(std::string nick) const
     return it->second;
 }
 
+Client &    Server::getClient(const std::string &nick)
+{
+    std::map<int, Client>::iterator it;
+    for (it = _clientsDB.begin(); it != _clientsDB.end(); it++)
+    {
+        if(it->second.getClientNickname() == nick)
+            return it->second;
+    }
+    return it->second;
+}
 
 /****************************************************************************/
 /*                           Members Functions                              */
@@ -1327,6 +1337,7 @@ void Server::INVITE(Client &  client_temp, std::vector<std::string> & args) {
                 {
                     this->getChannelDB().find(channel)->second.addInvite(getClient(invited));
                     client_temp.getBufOUT() = RPL_INVITING(_serverName, client_temp.getClientNickname(), invited, channel);
+                    getClient(invited).getBufOUT() += RPL_MY_INVITE(_serverName, client_temp, invited, channel);
                     return ;
                 }
             }

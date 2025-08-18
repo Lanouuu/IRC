@@ -75,7 +75,10 @@ void    Channel::setLimit(std::string const & mode, size_t const & limit)
 void    Channel::setInvitation(std::string const & mode)
 {
     if (mode == "+")
+    {
         _inviteOnlyIsSet = true;
+        std::cout << "CHANNEL SET TO INVITE ONLY" << std::endl;
+    }
     else if (mode == "-")
         _inviteOnlyIsSet = false;
 }
@@ -173,6 +176,11 @@ std::vector<std::pair<std::string, std::string> > &  Channel::getBanList()
     return _banList;
 }
 
+std::map<std::string, Client> & Channel::getInviteList()
+{
+    return _inviteList;
+}
+
 bool    Channel::isOperator(const std::string nick) const
 {
     std::vector<std::string>::const_iterator it = std::find(_operators.begin(), _operators.end(), nick);
@@ -225,14 +233,14 @@ void    Channel::addOperator(std::string const & name)
     _operators.push_back(name);
 }
 
-void    Channel::addInvite(std::string const & name)
+void    Channel::addInvite(Client const & name)
 {
-    _inviteList.push_back(name);
+    _inviteList.insert(std::pair<std::string, Client>(name.getClientNickname(), name));
 }
 
 void    Channel::eraseInvite(std::string const & name)
 {
-    std::vector<std::string>::iterator it = std::find(_inviteList.begin(), _inviteList.end(), name);
+    std::map<std::string, Client>::iterator it = _inviteList.find(name);
     if(it != _inviteList.end())
         _inviteList.erase(it);
     else
@@ -244,7 +252,7 @@ void    Channel::eraseInvite(std::string const & name)
 
 bool    Channel::isInvite(std::string const & name)
 {
-    std::vector<std::string>::iterator it = std::find(_inviteList.begin(), _inviteList.end(), name);
+    std::map<std::string, Client>::iterator it = _inviteList.find(name);
     if(it != _inviteList.end())
         return true;
     else

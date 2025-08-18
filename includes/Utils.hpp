@@ -9,7 +9,8 @@
 #include <signal.h>
 #include <iostream>
 #include <sstream>
-
+#include <errno.h>
+#include <cstdlib>
 extern sig_atomic_t stop;
 
 void    signal_handler(int s);

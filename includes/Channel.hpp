@@ -36,6 +36,8 @@ class   Channel
         std::map<std::string, Client> const & getMembers() const;
         std::map<std::string, Client> & getMembers();
         std::vector<std::string> const & getOperators() const;
+        std::map<std::string, Client> & getInviteList();
+
         bool                isOperator(const std::string nick) const;
 
         void                broadcast(std::string const & message);
@@ -44,7 +46,7 @@ class   Channel
         void                addOperator(std::string const & name);
         void                eraseOperator(std::string const & name);
 
-        void                addInvite(std::string const & name);
+        void                addInvite(Client const & name);
         void                eraseInvite(std::string const & name);
         bool                isInvite(std::string const & name);
 
@@ -53,7 +55,7 @@ class   Channel
     private:
         std::map<std::string, Client>   _members;
         std::vector<std::string>        _operators;
-        std::vector<std::string>        _inviteList;
+        std::map<std::string, Client>        _inviteList;
         std::vector<std::pair<std::string, std::string> >        _banList;
         std::string                     _password;
         std::string                     _subject;

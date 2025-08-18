@@ -51,6 +51,7 @@ std::string ERR_NOSUCHNICK(const std::string & server, const std::string & nick,
 std::string ERR_INVALIDMODEPARAM(const std::string & server, const std::string & nick, const std::string channel, const std::string & mode, const std::string & args);
 std::string ERR_NORECIPIENT(const std::string & server, const std::string & nick, const std::string & cmd);
 std::string ERR_NOTEXTTOSEND(const std::string & server, const std::string & nick);
+std::string ERR_CANNOTSENDTOCHAN(const std::string & server, const std::string & nick, const std::string & channel);
 
 /********* Others Replies *********/
 

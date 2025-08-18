@@ -296,6 +296,12 @@ std::string ERR_NOTEXTTOSEND(const std::string & server, const std::string & nic
     return (buf);
 }
 
+std::string ERR_CANNOTSENDTOCHAN(const std::string & server, const std::string & nick, const std::string & channel)
+{
+    std::string buf = ":" + server + " 404 " + nick + " " + channel + " :Cannot send to channel" + "\r\n";
+    return (buf);
+}
+
 
 /****************************************************************************/
 /*                              OTHERS REPLIES                              */

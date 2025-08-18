@@ -47,6 +47,7 @@ class   Channel
         void                addInvite(std::string const & name);
         void                eraseInvite(std::string const & name);
         bool                isInvite(std::string const & name);
+        void                sendToAll(Client & client_temp, std::string & message);
 
         std::vector<std::string>::iterator findOperator(std::string const & name);
 

@@ -454,6 +454,8 @@ int    Server::execCMD(Client & client_temp, std::string & req)
         LIST(client_temp);
     else if (cmd == "INVITE")
         INVITE(client_temp, args);
+    else if (cmd == "PRIVMSG")
+        PRIVMSG(client_temp, cmd, args);
     else
         client_temp.getBufOUT() = ERR_UNKNOWNCOMMAND(_serverName, client_temp.getClientNickname(), cmd);
     return (0);
@@ -1299,4 +1301,108 @@ void Server::INVITE(Client &  client_temp, std::vector<std::string> & args) {
         client_temp.getBufOUT() = ERR_NOSUCHCHANNEL(_serverName, client_temp.getClientNickname(), channel);
         return ;
     } 
+}
+
+
+/********* PRIVMSG *********/
+
+
+void    Server::parseTargets(std::string & targetsStr, std::vector<std::string> & targets)
+{
+    std::istringstream  stream(targetsStr);
+    std::string         buf;
+
+    if (targetsStr.find(',') == std::string::npos)
+    {
+        targets.push_back(targetsStr);
+        return ;
+    }
+    while (std::getline(stream, buf, ','))
+        targets.push_back(buf);
+    return ;
+}
+
+void    Server::parseMessage(std::vector<std::string> & args, std::string & message)
+{
+    if (args[1][0] == ':') 
+    {
+        message = args[1].substr(1);
+        for (size_t i = 2; i < args.size(); ++i)
+            message += " " + args[i];
+    } 
+    else
+        message = args[1];
+    return ;
+}
+
+void    Server::sendToChannel(Client & client_temp, std::string & target, std::string & message)
+{
+    if (std::find(_channelDB.begin(), _channelDB.end(), target) == _channelDB.end())
+    {
+        client_temp.getBufOUT() = ERR_NOSUCHCHANNEL(_serverName, client_temp.getClientNickname(), target);
+        return ;
+    }
+    Channel channel_target = _channelDB[target];
+    /*
+        Verifier que client_temp n'est pas Ban du channel
+    */
+    channel_target.sendToAll() // a implementer
+}
+
+void    Server::sendToUser(Client & client_temp, std::string & target, std::string & message)
+{
+    Client  client_target;
+    int     flag = 0;
+    for (client_map::iterator it = _clientsDB.begin(); it != _clientsDB.end(); it++)
+    {
+        if (it->second.getClientNickname() == target)
+        {
+            client_target = it->second;
+            flag = 1;
+            break ;
+        }
+    }
+    if (flag == 0)
+    {
+        client_temp.getBufOUT() = ERR_NOSUCHNICK(_serverName, client_temp.getClientNickname(), target);
+        return ;
+    }
+    std::string buf = PRIVMSG_REPLY(client_temp.getClientNickname(), target, message);
+    if (send(client_target.getSocket(), buf.c_str(), buf.size(), 0) == -1)
+    {
+        std::cerr << RED "Error: send -> sendToUser(): " << target << END << std::endl;
+        _clientsDB[client_target.getSocket()].getDisconnectClient() = true;
+    }
+    return ;
+}
+
+void    Server::PRIVMSG(Client & client_temp, std::string & cmd, std::vector<std::string> & args)
+{
+    if (args.empty())
+    {
+        client_temp.getBufOUT() = ERR_NORECIPIENT(_serverName, client_temp.getClientNickname(), cmd);
+        return ;
+    }
+    if (args.size() == 1)
+    {
+        client_temp.getBufOUT() = ERR_NOTEXTTOSEND(_serverName, client_temp.getClientNickname());
+        return ;
+    }
+    std::vector<std::string>    targets;
+    std::string                 message;
+    parseTargets(args[0], targets);
+    parseMessage(args, message);
+    if (message.empty())
+    {
+        client_temp.getBufOUT() = ERR_NOTEXTTOSEND(_serverName, client_temp.getClientNickname());
+        return ;
+    }
+    for (std::vector<std::string>::iterator it = targets.begin(); it != targets.end(); it++)
+    {
+        if ((*it)[0] == '#')
+            sendToChannel(client_temp, *it, message);
+        else
+            sendToUser(client_temp, *it, message);
+    }
+    return ;
 }

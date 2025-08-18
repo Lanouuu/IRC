@@ -769,11 +769,11 @@ static void checkInviteList(Channel & channel, Client & client, std::string cons
     if (!channel.getInviteList().empty())
     {
         if (!channel.isInvite(client.getClientNickname()))
-            client.getBufOUT() = ERR_INVITEONLYCHAN(serverName, client.getClientNickname(), channel.getName());
+            client.getBufOUT() += ERR_INVITEONLYCHAN(serverName, client.getClientNickname(), channel.getName());
         else if (channel.passwordIsSet())
         {
             if (password != channel.getPassword())
-                client.getBufOUT() = ERR_BADCHANNELKEY(serverName, client.getClientNickname(), channel.getName());
+                client.getBufOUT() += ERR_BADCHANNELKEY(serverName, client.getClientNickname(), channel.getName());
         }
     }
 }
@@ -798,9 +798,9 @@ void    Server::JOIN(Client & client_temp, std::vector<std::string> & args, std:
             if (!_channelDB.at(it->first).isOnTheBanList(client_temp.getClientNickname(), client_temp.getClientRealname()))
             {
                 if (_channelDB.at(it->first).limitIsSet() && _channelDB.at(it->first).getLimit() <= _channelDB.at(it->first).getMembers().size())
-                     client_temp.getBufOUT() = ERR_CHANNELISFULL(_serverName, client_temp.getClientNickname(), it->first);
+                     client_temp.getBufOUT() += ERR_CHANNELISFULL(_serverName, client_temp.getClientNickname(), it->first);
                 else if (isAlreadyOnTheChannel(it->first, client_temp.getClientNickname()))
-                    client_temp.getBufOUT() = ERR_USERONCHANNEL(_serverName, client_temp.getClientNickname(), it->first);
+                    client_temp.getBufOUT() += ERR_USERONCHANNEL(_serverName, client_temp.getClientNickname(), it->first);
                 else if (_channelDB.at(it->first).isInviteOnly())
                     checkInviteList(_channelDB.at(it->first), client_temp, _serverName, it->second);
                 else
@@ -808,17 +808,17 @@ void    Server::JOIN(Client & client_temp, std::vector<std::string> & args, std:
                     if (_channelDB.at(it->first).passwordIsSet())
                     {
                         if (args.size() < 2)
-                            client_temp.getBufOUT() = ERR_BADCHANNELKEY(_serverName, client_temp.getClientNickname(), it->first);
+                            client_temp.getBufOUT() += ERR_BADCHANNELKEY(_serverName, client_temp.getClientNickname(), it->first);
                         else
                         {
                             if (it->second != _channelDB.at(it->first).getPassword())
-                                client_temp.getBufOUT() = ERR_PASSWDMISMATCH(_serverName);
+                                client_temp.getBufOUT() += ERR_PASSWDMISMATCH(_serverName);
                         }
                     }
                 }
             }
             else
-                client_temp.getBufOUT() = ERR_BANNEDFROMCHAN(_serverName, client_temp.getClientNickname(), it->first);
+                client_temp.getBufOUT() += ERR_BANNEDFROMCHAN(_serverName, client_temp.getClientNickname(), it->first);
         }
         if (client_temp.getBufOUT().empty())
         {
@@ -1280,7 +1280,7 @@ void Server::INVITE(Client &  client_temp, std::vector<std::string> & args) {
                 else
                 {
                     this->getChannelDB().find(channel)->second.addInvite(getClient(invited));
-                    client_temp.getBufOUT() = RPL_INVITING(_serverName, client_temp.getClientNickname(), invited, channel);
+                    client_temp.getBufOUT() += RPL_INVITING(_serverName, client_temp.getClientNickname(), invited, channel);
                     getClient(invited).getBufOUT() += RPL_MY_INVITE(_serverName, client_temp, invited, channel);
                     return ;
                 }

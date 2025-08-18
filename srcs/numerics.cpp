@@ -188,7 +188,7 @@ std::string ERR_UNKNOWNCOMMAND(const std::string & server, const std::string & n
     if (nick.empty())
         buf = RED ":" + server + " 421 " + "* " + cmd + " :Unknown command" END + "\r\n";
     else
-        buf = buf = RED ":" + server + " 421 " + nick + " " + cmd + " :Unknown command" END + "\r\n";
+        buf = RED ":" + server + " 421 " + nick + " " + cmd + " :Unknown command" END + "\r\n";
     return (buf);
 }
 
@@ -208,7 +208,7 @@ std::string ERR_NOTREGISTERED(const std::string & server, const std::string & ni
     if (nick.empty())
         buf = RED ":" + server + " 451 " + "*" + " :You have not registered" END + "\r\n";
     else
-        buf = buf = RED ":" + server + " 451 " + nick + " :You have not registered" END + "\r\n";
+        buf = RED ":" + server + " 451 " + nick + " :You have not registered" END + "\r\n";
     return (buf);
 }
 

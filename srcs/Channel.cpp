@@ -283,7 +283,7 @@ void    Channel::sendToAll(Client & client_temp, std::string & message)
     {
         if (client_temp.getClientNickname() != it->second.getClientNickname())
         {
-            std::string buf = PRIVMSG_REPLY(client_temp.getClientNickname(), it->second.getClientNickname(), message);
+            std::string buf = PRIVMSG_REPLY(client_temp.getClientNickname(), this->_name, message);
             it->second.getBufOUT() += buf;
             if (send(it->second.getSocket(), it->second.getBufOUT().c_str(), it->second.getBufOUT().size(), 0) == -1)
             {

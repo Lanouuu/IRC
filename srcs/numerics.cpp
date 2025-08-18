@@ -108,13 +108,13 @@ std::string ERR_NONICKNAMEGIVEN(const std::string & server, const std::string & 
 {
     std::string buf;
     if (nick.empty() && user.empty())
-        buf = ":" + server + " 431 " + "*" + " :No nickname given" + "\r\n";
+        buf = RED ":" + server + " 431 " + "*" + " :No nickname given" END + "\r\n";
     else if (user.empty())
-        buf = ":" + server + " 431 " + nick + " :No nickname given" + "\r\n";
+        buf = RED ":" + server + " 431 " + nick + " :No nickname given" END + "\r\n";
     else if (nick.empty())
-        buf = ":" + server + " 431 " + user + " :No nickname given" + "\r\n";
+        buf = RED ":" + server + " 431 " + user + " :No nickname given" END + "\r\n";
     else
-        buf = ":" + server + " 431 " + nick + " :No nickname given" + "\r\n";
+        buf = RED ":" + server + " 431 " + nick + " :No nickname given" END + "\r\n";
     return (buf);
 }
 
@@ -122,9 +122,9 @@ std::string ERR_ERRONEUSNICKNAME(const std::string & server, const std::string &
 {
     std::string buf;
     if (user.empty())
-        buf = ":" + server + " 432 " + "* " + nick + " :Erroneus nickname" + "\r\n";
+        buf = RED ":" + server + " 432 " + "* " + nick + " :Erroneus nickname" END + "\r\n";
     else
-        buf = ":" + server + " 432 " + user + " " + nick + " :Erroneus nickname" + "\r\n";
+        buf = RED ":" + server + " 432 " + user + " " + nick + " :Erroneus nickname" END + "\r\n";
     return (buf);
 }
 
@@ -132,9 +132,9 @@ std::string ERR_NICKNAMEINUSE(const std::string & server, const std::string & ni
 {
     std::string buf;
     if (user.empty())
-        buf = ":" + server + " 433 " + "* " + nick + " :Nickname is already in use" + "\r\n";
+        buf = RED ":" + server + " 433 " + "* " + nick + " :Nickname is already in use" END + "\r\n";
     else
-        buf = ":" + server + " 433 " + user + " " + nick + " :Nickname is already in use" + "\r\n";
+        buf = RED ":" + server + " 433 " + user + " " + nick + " :Nickname is already in use" END + "\r\n";
     return (buf);
 }
 
@@ -142,15 +142,15 @@ std::string ERR_NEEDMOREPARAMS(const std::string & server, const std::string & n
 {
     std::string buf;
     if (nick.empty())
-        buf = ":" + server + " 461 " + "* " + command + " :Not enough parameters" + "\r\n";
+        buf = RED ":" + server + " 461 " + "* " + command + " :Not enough parameters" END + "\r\n";
     else
-        buf = ":" + server + " 461 " + nick + " " + command + " :Not enough parameters" + "\r\n";
+        buf = RED ":" + server + " 461 " + nick + " " + command + " :Not enough parameters" END + "\r\n";
     return (buf);
 }
 
 std::string ERR_PASSWDMISMATCH(const std::string & server)
 {
-    std::string buf = ":" + server + " 464 " + "*" + " :Password incorrect" + "\r\n";
+    std::string buf = RED ":" + server + " 464 " + "*" + " :Password incorrect" END + "\r\n";
     return (buf);
 }
 
@@ -158,9 +158,9 @@ std::string ERR_ALREADYREGISTERED(const std::string & server, const std::string 
 {
     std::string buf;
     if (nick.empty())
-        buf = ":" + server + " 462 " + "*" + " :You may not reregister" + "\r\n";
+        buf = RED ":" + server + " 462 " + "*" + " :You may not reregister" END + "\r\n";
     else
-        buf = ":" + server + " 462 " + nick + " :You may not reregister" + "\r\n";
+        buf = RED ":" + server + " 462 " + nick + " :You may not reregister" END + "\r\n";
     return (buf);
 }
 
@@ -168,11 +168,11 @@ std::string ERR_UNKNOWNERROR(const std::string & server, const std::string & nic
 {
     std::string buf;
     if (cmd.empty() && nick.empty())
-        buf = ":" + server + " 400 " + "* " + "* " + ":" + info + "\r\n";
+        buf = RED ":" + server + " 400 " + "* " + "* " + ":" + info + END + "\r\n";
     else if (nick.empty())
-        buf = ":" + server + " 400 " + "* " + cmd + " " + ":" + info + "\r\n";
+        buf = RED ":" + server + " 400 " + "* " + cmd + " " + ":" + info + END + "\r\n";
     else if (cmd.empty())
-        buf = ":" + server + " 400 " + nick + " " + "* " + ":" + info + "\r\n";
+        buf = RED ":" + server + " 400 " + nick + " " + "* " + ":" + info + END + "\r\n";
     return (buf);
 }
 
@@ -180,9 +180,9 @@ std::string ERR_UNKNOWNCOMMAND(const std::string & server, const std::string & n
 {
     std::string buf;
     if (nick.empty())
-        buf = ":" + server + " 421 " + "* " + cmd + " :Unknown command" + "\r\n";
+        buf = RED ":" + server + " 421 " + "* " + cmd + " :Unknown command" END + "\r\n";
     else
-        buf = buf = ":" + server + " 421 " + nick + " " + cmd + " :Unknown command" + "\r\n";
+        buf = buf = RED ":" + server + " 421 " + nick + " " + cmd + " :Unknown command" END + "\r\n";
     return (buf);
 }
 
@@ -190,9 +190,9 @@ std::string ERR_NOORIGIN(const std::string & server, const std::string & nick)
 {
     std::string buf;
     if (nick.empty())
-        buf = ":" + server + " 409 " + "*" + " :No origin specified" + "\r\n";
+        buf = RED ":" + server + " 409 " + "*" + " :No origin specified" END + "\r\n";
     else
-        buf = ":" + server + " 409 " + nick + " :No origin specified" + "\r\n";
+        buf = RED ":" + server + " 409 " + nick + " :No origin specified" END + "\r\n";
     return (buf);
 }
 
@@ -200,9 +200,9 @@ std::string ERR_NOTREGISTERED(const std::string & server, const std::string & ni
 {
     std::string buf;
     if (nick.empty())
-        buf = ":" + server + " 451 " + "*" + " :You have not registered" + "\r\n";
+        buf = RED ":" + server + " 451 " + "*" + " :You have not registered" END + "\r\n";
     else
-        buf = buf = ":" + server + " 451 " + nick + " :You have not registered" + "\r\n";
+        buf = buf = RED ":" + server + " 451 " + nick + " :You have not registered" END + "\r\n";
     return (buf);
 }
 
@@ -210,7 +210,7 @@ std::string ERR_NOSUCHCHANNEL(const std::string & server, const std::string & ni
 {
     std::string buf;
     
-    buf = ":" + server + " 403 " + nick + " " + arg + " :No such channel" + "\r\n";
+    buf = RED ":" + server + " 403 " + nick + " " + arg + " :No such channel" END + "\r\n";
     return (buf);
 }
 
@@ -218,7 +218,7 @@ std::string ERR_BADCHANMASK(const std::string & server, const std::string & nick
 {
     std::string buf;
     
-    buf = ":" + server + " 476 " + nick + " " + arg + " :Bad Channel Mask" + "\r\n";
+    buf = RED ":" + server + " 476 " + nick + " " + arg + " :Bad Channel Mask" END + "\r\n";
     return (buf);   
 }
 
@@ -226,7 +226,7 @@ std::string ERR_USERONCHANNEL(const std::string & server, const std::string & ni
 {
     std::string buf;
     
-    buf = ":" + server + " 443 " + nick + " " + arg + " :is already on channel" + "\r\n";
+    buf = RED ":" + server + " 443 " + nick + " " + arg + " :is already on channel" END + "\r\n";
     return (buf);  
 }
 
@@ -234,7 +234,7 @@ std::string ERR_INVITEONLYCHAN(const std::string & server, const std::string & n
 {
     std::string buf;
     
-    buf = ":" + server + " 473 " + nick + " " + arg + " :Cannot join channel (+i)" + "\r\n";
+    buf = RED ":" + server + " 473 " + nick + " " + arg + " :Cannot join channel (+i)" END + "\r\n";
     return (buf);  
 }
 
@@ -242,7 +242,7 @@ std::string ERR_BADCHANNELKEY(const std::string & server, const std::string & ni
 {
     std::string buf;
     
-    buf = ":" + server + " 475 " + nick + " " + arg + " :Cannot join channel (+k)" + "\r\n";
+    buf = RED ":" + server + " 475 " + nick + " " + arg + " :Cannot join channel (+k)" END + "\r\n";
     return (buf); 
 }
 
@@ -250,40 +250,51 @@ std::string ERR_NOTONCHANNEL(const std::string & server, const std::string & nic
 {
     std::string buf;
     
-    buf = ":" + server + " 442 " + nick + " " + arg + "<client> <channel> :You're not on that channel" + "\r\n";
+    buf = RED ":" + server + " 442 " + nick + " " + arg + "<client> <channel> :You're not on that channel" END + "\r\n";
     return (buf); 
 }
 
 std::string ERR_CHANOPRIVSNEEDED(const std::string & server, const std::string & nick, const std::string & arg)
 {
-    std::string buf = ":" + server + " 482 " + nick + " " + arg + " :You're not channel operator" + "\r\n";
+    std::string buf = RED ":" + server + " 482 " + nick + " " + arg + " :You're not channel operator" END + "\r\n";
     return (buf); 
 }
 
 std::string ERR_UNKNOWNMODE(const std::string & server, const std::string & nick, const std::string & mode)
 {
-    std::string buf = ":" + server + " 472 " + nick + " " + mode + " :is unknown mode char to me" + "\r\n";
+    std::string buf = RED ":" + server + " 472 " + nick + " " + mode + " :is unknown mode char to me" END + "\r\n";
     return (buf);
 }
 
 std::string ERR_USERNOTINCHANNEL(const std::string & server, const std::string & nick, const std::string & args, const std::string & channel)
 {
-    std::string buf = ":" + server + " 441 " + nick + " " + args + " " + channel + " :They aren't on that channel" + "\r\n";
+    std::string buf = RED ":" + server + " 441 " + nick + " " + args + " " + channel + " :They aren't on that channel" END + "\r\n";
     return (buf);
 }
 
 std::string ERR_NOSUCHNICK(const std::string & server, const std::string & nick, const std::string & target)
 {
-    std::string buf = ":" + server + " 401 " + nick + " " + target + " :No such nick/channel" + "\r\n";
+    std::string buf = RED ":" + server + " 401 " + nick + " " + target + " :No such nick/channel" END + "\r\n";
     return (buf);
 }
 
 std::string ERR_INVALIDMODEPARAM(const std::string & server, const std::string & nick, const std::string channel, const std::string & mode, const std::string & args)
 {
-    std::string buf = ":" + server + " 696 " + nick + " " + channel + " " + mode + " " + args + " :Invalid mode parameters" + "\r\n";
+    std::string buf = RED ":" + server + " 696 " + nick + " " + channel + " " + mode + " " + args + " :Invalid mode parameters" END + "\r\n";
     return (buf);
 }
 
+std::string ERR_BANNEDFROMCHAN(const std::string & server, const std::string & nick, const std::string & arg)
+{
+    std::string buf = RED ":" + server + " 474 " + nick + " " + arg + " :Cannot join channel (+b)" END + "\r\n";
+    return (buf);
+}
+
+std::string ERR_CHANNELISFULL(const std::string & server, const std::string & nick, const std::string & arg)
+{
+    std::string buf = RED ":" + server + " 471 " + nick + " " + arg + " :Cannot join channel (+l)" END + "\r\n";
+    return (buf);    
+}
 
 /****************************************************************************/
 /*                              OTHERS REPLIES                              */
@@ -300,12 +311,14 @@ std::string MODE_REPLY(const std::string &nick, const std::string & channel, con
     return (buf);
 }
 
-std::string KICK_REPLY(const std::string & server, const std::string &nick, const std::string &username, const std::string &victimName, const std::string & channel, const std::string & args)
+std::string KICK_REPLY(const std::string &nick, const std::string &username, const std::string &victimName, const std::string & channel, const std::string & args)
 {
     std::string buf;
-    buf = ":" + server + " " + nick + "!" + username + "@localhost KICK " + channel + " " + victimName;
+    buf = ":" + nick + "!" + username + "@localhost " + "KICK " + channel + " " + victimName;
     if (!args.empty())
-        buf += " :" + args;
+        buf += " " + args;
+    else
+        buf += " kicked"; 
     buf += "\r\n";
     return (buf);
 }

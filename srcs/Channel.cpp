@@ -62,6 +62,7 @@ void    Channel::setLimit(std::string const & mode, size_t const & limit)
 {
     if (mode == "+")
     {
+        std::cout << "CHANNEL SET LIMIT TO " << limit << std::endl;
         _limitIsSet = true;
         _limit = limit;
     }
@@ -151,7 +152,7 @@ bool const &        Channel::passwordIsSet() const
     return _passwordIsSet;
 }
 
-bool const &        Channel::getLimitMode() const
+bool const &        Channel::limitIsSet() const
 {
     return _limitIsSet;
 }
@@ -171,7 +172,7 @@ std::vector<std::string> const & Channel::getOperators() const
     return _operators;
 }
 
-std::vector<std::pair<std::string, std::string> > &  Channel::getBanList()
+std::map<std::string, std::string> &  Channel::getBanList()
 {
     return _banList;
 }
@@ -188,6 +189,23 @@ bool    Channel::isOperator(const std::string nick) const
         return true;
     else
         return false;
+}
+
+bool    Channel::isOnTheBanList(std::string const & nick, std::string const & realname)
+{
+    std::cout << RED "BANLIST " << this->getName() << std::endl;
+    for (std::map<std::string, std::string>::const_iterator it1 = _banList.begin(); it1 != _banList.end(); it1++)
+    {
+        std::cout << "[" << it1->first << "] " << "[" << it1->second << "]" << std::endl; 
+    }
+    std::cout << END << std::endl;
+    std::map<std::string, std::string>::const_iterator it = _banList.find(nick);
+    if(it != _banList.end())
+    {
+        if (realname == it->second)
+            return true;
+    }
+    return false;  
 }
 
 std::vector<std::string>::iterator Channel::findOperator(std::string const & name)

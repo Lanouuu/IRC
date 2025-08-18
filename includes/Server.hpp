@@ -82,7 +82,6 @@ class   Server
         void                bytesReceived(Client & client_temp, std::string & buf);
         int                 execCMD(Client & client_temp, std::string & req);
         void                parseCMD(std::string & req, std::string & cmd, std::vector<std::string> & args);
-        void                checkInviteList(Channel & channel);
 
         int                 PASS(Client &  client_temp, std::string & cmd, std::vector<std::string> & args);
         void                NICK(Client &  client_temp, std::vector<std::string> & args);

@@ -756,72 +756,28 @@ static void joinChannel(Client & client, Channel & channel)
     channel.broadcast(message);
 }
 
-// void    Server::JOIN(Client & client_temp, std::vector<std::string> & args, std::string const & cmd)
-// {
-//     std::vector<std::pair<std::string, std::string> > channels;
-
-//     if (args.size() == 0)
-//     {
-//         client_temp.getBufOUT() = ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), cmd);
-//         return ;
-//     }
-//     getChannelsAndPassword(args, channels);
-//     for (std::vector<std::pair<std::string, std::string> >::const_iterator it = channels.begin(); it != channels.end(); it++)
-//     {
-//         if (parseJoinCommand(*this, client_temp, it->first) == 1)
-//             continue;
-//         if (!ChannelExist(it->first))
-//             createChannel(_channelDB, it->first, it->second, client_temp.getClientNickname());
-//         else    
-//         {
-//             if (isAlreadyOnTheChannel(it->first, client_temp.getClientNickname()))
-//                 client_temp.getBufOUT() = ERR_USERONCHANNEL(_serverName, client_temp.getClientNickname(), it->first);
-//             else if (_channelDB.at(it->first).isInviteOnly())
-//                 client_temp.getBufOUT() = ERR_INVITEONLYCHAN(_serverName, client_temp.getClientNickname(), it->first);
-//             else
-//             {
-//                 if (_channelDB.at(it->first).passwordIsSet())
-//                 {
-//                     if (args.size() < 2)
-//                         client_temp.getBufOUT() = ERR_BADCHANNELKEY(_serverName, client_temp.getClientNickname(), it->first);
-//                     else
-//                     {
-//                         if (it->second != _channelDB.at(it->first).getPassword())
-//                             client_temp.getBufOUT() = ERR_PASSWDMISMATCH(_serverName);
-//                     }
-//                 }
-//             }
-//         }
-//         std::cout << BLUE "CREATING/JOINING CHANNEL " << it->first << " [PASSWORD]-> " << _channelDB.at(it->first).getPassword() << END << std::endl;
-//         joinChannel(client_temp, _channelDB.at(it->first));
-//         joinReply(client_temp, _channelDB.at(it->first)); 
-//     }
-// }
-
-
-// void Server::checkInviteList(Channel & channel)
-// {
-//     if (!channel.getInviteList().empty())
-//     {
-//         for (std::map<std::string, Client>::iterator it = channel.getInviteList().begin(); it != channel.getInviteList().end(); it++)
-//         {
-//             channel.addMember(it->);
-//             std::string message = ":" + it->getClientNickname() + "!" + it->getClientUsername() + "@localhost JOIN :" + channel.getName() + "\r\n";
-//             channel.broadcast(message);
-//             joinReply(*it, channel);
-//         }
-//     }
-// }
+static void checkInviteList(Channel & channel, Client & client, std::string const & serverName, std::string const & password)
+{
+    if (!channel.getInviteList().empty())
+    {
+        if (!channel.isInvite(client.getClientNickname()))
+            client.getBufOUT() = ERR_INVITEONLYCHAN(serverName, client.getClientNickname(), channel.getName());
+        else if (channel.passwordIsSet())
+        {
+            if (password != channel.getPassword())
+                client.getBufOUT() = ERR_BADCHANNELKEY(serverName, client.getClientNickname(), channel.getName());
+        }
+    }
+}
 
 void    Server::JOIN(Client & client_temp, std::vector<std::string> & args, std::string const & cmd)
 {
-    std::vector<std::pair<std::string, std::string> > channels;
-
     if (args.size() == 0)
     {
         client_temp.getBufOUT() = ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), cmd);
         return ;
     }
+    std::vector<std::pair<std::string, std::string> > channels;
     getChannelsAndPassword(args, channels);
     for (std::vector<std::pair<std::string, std::string> >::const_iterator it = channels.begin(); it != channels.end(); it++)
     {
@@ -831,42 +787,37 @@ void    Server::JOIN(Client & client_temp, std::vector<std::string> & args, std:
             createChannel(_channelDB, it->first, it->second, client_temp.getClientNickname());
         else    
         {
-            if (isAlreadyOnTheChannel(it->first, client_temp.getClientNickname()))
+            if (!_channelDB.at(it->first).isOnTheBanList(client_temp.getClientNickname(), client_temp.getClientRealname()))
             {
-                client_temp.getBufOUT() = ERR_USERONCHANNEL(_serverName, client_temp.getClientNickname(), it->first);
-                continue;
-            }
-            else if (_channelDB.at(it->first).isInviteOnly())
-            {
-                if (!_channelDB.at(it->first).isInvite(client_temp.getClientNickname()))
+                if (_channelDB.at(it->first).limitIsSet() && _channelDB.at(it->first).getLimit() <= _channelDB.at(it->first).getMembers().size())
+                     client_temp.getBufOUT() = ERR_CHANNELISFULL(_serverName, client_temp.getClientNickname(), it->first);
+                else if (isAlreadyOnTheChannel(it->first, client_temp.getClientNickname()))
+                    client_temp.getBufOUT() = ERR_USERONCHANNEL(_serverName, client_temp.getClientNickname(), it->first);
+                else if (_channelDB.at(it->first).isInviteOnly())
+                    checkInviteList(_channelDB.at(it->first), client_temp, _serverName, it->second);
+                else
                 {
-                    client_temp.getBufOUT() = ERR_INVITEONLYCHAN(_serverName, client_temp.getClientNickname(), it->first);
-                    continue;
-                }
-            }
-            else
-            {
-                if (_channelDB.at(it->first).passwordIsSet())
-                {
-                    if (args.size() < 2)
+                    if (_channelDB.at(it->first).passwordIsSet())
                     {
-                        client_temp.getBufOUT() = ERR_BADCHANNELKEY(_serverName, client_temp.getClientNickname(), it->first);
-                        continue;
-                    }
-                    else
-                    {
-                        if (it->second != _channelDB.at(it->first).getPassword())
+                        if (args.size() < 2)
+                            client_temp.getBufOUT() = ERR_BADCHANNELKEY(_serverName, client_temp.getClientNickname(), it->first);
+                        else
                         {
-                            client_temp.getBufOUT() = ERR_PASSWDMISMATCH(_serverName);
-                            continue;
+                            if (it->second != _channelDB.at(it->first).getPassword())
+                                client_temp.getBufOUT() = ERR_PASSWDMISMATCH(_serverName);
                         }
                     }
                 }
             }
+            else
+                client_temp.getBufOUT() = ERR_BANNEDFROMCHAN(_serverName, client_temp.getClientNickname(), it->first);
         }
-        std::cout << BLUE "CREATING/JOINING CHANNEL " << it->first << " [PASSWORD]-> " << _channelDB.at(it->first).getPassword() << END << std::endl;
-        joinChannel(client_temp, _channelDB.at(it->first));
-        joinReply(client_temp, _channelDB.at(it->first)); 
+        if (client_temp.getBufOUT().empty())
+        {
+            std::cout << BLUE "CREATING/JOINING CHANNEL " << it->first << " [PASSWORD]-> " << _channelDB.at(it->first).getPassword() << END << std::endl;
+            joinChannel(client_temp, _channelDB.at(it->first));
+            joinReply(client_temp, _channelDB.at(it->first)); 
+        }
     }
 }
 
@@ -968,38 +919,23 @@ void    Server::KICK(Client & client, std::string const & cmd, std::vector<std::
     }
     if (ChannelExist(args[0]))
     {
-        std::cout << "KICK CHANNEL EXIST" << std::endl;
-        // Channel channel = _channelDB.at(args[0]);
         if (_channelDB.at(args[0]).isOperator(client.getClientNickname()))
         {
             if (_channelDB.at(args[0]).getMembers().find(args[1]) != _channelDB.at(args[0]).getMembers().end())
             {
-                std::cout << args[1] << " HAS BEEN KICK" << std::endl;
                 if (args.size() > 2)
-                {
-                    std::cout << "KICK BROADCAST 1" << std::endl;
-                    _channelDB.at(args[0]).broadcast(KICK_REPLY(_serverName, client.getClientNickname(), client.getClientUsername(), args[1], args[0], args[2]));
-
-                }
+                    _channelDB.at(args[0]).broadcast(KICK_REPLY(client.getClientNickname(), client.getClientUsername(), args[1], args[0], args[2]));
                 else
-                {
-                    std::cout << "KICK BROADCAST 2" << std::endl;
-
-                    _channelDB.at(args[0]).broadcast(KICK_REPLY(_serverName, client.getClientNickname(), client.getClientUsername(), args[1], args[0], ""));       
-                }
-                _channelDB.at(args[0]).getBanList().push_back(std::pair<std::string, std::string>(args[1], _channelDB.at(args[0]).getMembers().find(args[1])->second.getClientRealname()));
+                    _channelDB.at(args[0]).broadcast(KICK_REPLY(client.getClientNickname(), client.getClientUsername(), args[1], args[0], ""));       
+                _channelDB.at(args[0]).getBanList().insert(std::pair<std::string, std::string>(args[1], _channelDB.at(args[0]).getMembers().find(args[1])->second.getClientRealname()));
                 _channelDB.at(args[0]).getMembers().erase(args[1]);
                 if (_channelDB.at(args[0]).isOperator(args[1]))
                     _channelDB.at(args[0]).eraseOperator(args[1]);
                 if (_channelDB.at(args[0]).getMembers().size() == 0)
-                {
-                    std::cout << "NO MEMBER LEFT" << std::endl;
                     _channelDB.erase(args[0]);
-                    return ;
-                }
             }
             else
-                client.getBufOUT() = ERR_NOTONCHANNEL(_serverName, client.getClientNickname(), cmd);
+                client.getBufOUT() = ERR_NOTONCHANNEL(_serverName, args[1], cmd);
         }
         else
             client.getBufOUT() = ERR_CHANOPRIVSNEEDED(_serverName, client.getClientNickname(), cmd);

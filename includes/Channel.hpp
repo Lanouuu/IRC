@@ -31,14 +31,16 @@ class   Channel
         bool const &        isInviteOnly() const;
         bool const &        topicIsSet() const;
         bool const &        passwordIsSet() const;
-        bool const &        getLimitMode() const;
-        std::vector<std::pair<std::string, std::string> > &        getBanList();
+        bool const &        limitIsSet() const;
+        std::map<std::string, std::string> &        getBanList();
         std::map<std::string, Client> const & getMembers() const;
         std::map<std::string, Client> & getMembers();
         std::vector<std::string> const & getOperators() const;
         std::map<std::string, Client> & getInviteList();
 
         bool                isOperator(const std::string nick) const;
+        bool                isInvite(std::string const & name);
+        bool                isOnTheBanList(std::string const & nick, std::string const & realname);
 
         void                broadcast(std::string const & message);
         void                addMember(Client & client);
@@ -48,7 +50,6 @@ class   Channel
 
         void                addInvite(Client const & name);
         void                eraseInvite(std::string const & name);
-        bool                isInvite(std::string const & name);
 
         std::vector<std::string>::iterator findOperator(std::string const & name);
 
@@ -56,7 +57,7 @@ class   Channel
         std::map<std::string, Client>   _members;
         std::vector<std::string>        _operators;
         std::map<std::string, Client>        _inviteList;
-        std::vector<std::pair<std::string, std::string> >        _banList;
+        std::map<std::string, std::string>        _banList;
         std::string                     _password;
         std::string                     _subject;
         size_t                          _limit;

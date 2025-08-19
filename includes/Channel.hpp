@@ -1,6 +1,9 @@
 #ifndef CHANNEL_HPP
 # define CHANNEL_HPP
 
+# define QUIT_MESSAGE 1
+# define PRIV_MESSAGE 2
+
 #include <map>
 #include <string>
 #include <vector>
@@ -12,63 +15,65 @@ class Client;
 class   Channel
 {
     public:
+
         Channel();
         Channel(Channel const & src);
         ~Channel();
-        Channel &           operator=(const Channel & rhs);
-        void                setPassword(std::string const & mode, std::string const & password);
-        void                setSubject(std::string const & subject);
-        void                setIsTopic(std::string const & mode);
-        void                setLimit(std::string const & mode, size_t const & limit);
-        void                setInvitation(std::string const & mode);
-        void                setName(std::string const & name);
-        void                setOperator(std::string const & mode, std::string const & name);
 
-        std::string const & getPassword() const;
-        std::string const & getTopic() const;
-        size_t const &      getLimit() const;
-        std::string const & getName() const;
-        bool const &        isInviteOnly() const;
-        bool const &        topicIsSet() const;
-        bool const &        passwordIsSet() const;
-        bool const &        limitIsSet() const;
-        std::map<std::string, std::string> &        getBanList();
-        std::map<std::string, Client> const & getMembers() const;
-        std::map<std::string, Client> & getMembers();
-        std::vector<std::string> const & getOperators() const;
-        std::map<std::string, Client> & getInviteList();
+        Channel &                               operator=(const Channel & rhs);
 
-        bool                isOperator(const std::string nick) const;
-        bool                isOnTheBanList(std::string const & nick, std::string const & realname);
+        void                                    setPassword(std::string const & mode, std::string const & password);
+        void                                    setSubject(std::string const & subject);
+        void                                    setIsTopic(std::string const & mode);
+        void                                    setLimit(std::string const & mode, size_t const & limit);
+        void                                    setInvitation(std::string const & mode);
+        void                                    setName(std::string const & name);
+        void                                    setOperator(std::string const & mode, std::string const & name);
+        std::string const &                     getPassword() const;
+        std::string const &                     getTopic() const;
+        size_t const &                          getLimit() const;
+        std::string const &                     getName() const;
+        
+        bool const &                            isInviteOnly() const;
+        bool const &                            topicIsSet() const;
+        bool const &                            passwordIsSet() const;
+        bool const &                            limitIsSet() const;
+        std::map<std::string, std::string> &    getBanList();
+        std::map<std::string, Client> const &   getMembers() const;
+        std::map<std::string, Client> &         getMembers();
+        std::vector<std::string> const &        getOperators() const;
+        std::map<std::string, Client> &         getInviteList();
 
-        void                broadcast(std::string const & message);
-        void                addMember(Client & client);
-        void                eraseMember(Client & client);
-        void                addOperator(std::string const & name);
-        void                eraseOperator(std::string const & name);
+        bool                                    isOperator(const std::string nick) const;
+        bool                                    isOnTheBanList(std::string const & nick, std::string const & realname);
+        void                                    broadcast(std::string const & message);
+        void                                    addMember(Client & client);
+        void                                    eraseMember(Client & client);
+        void                                    addOperator(std::string const & name);
+        void                                    eraseOperator(std::string const & name);
+        void                                    addInvite(Client const & name);
+        void                                    eraseInvite(std::string const & name);
+        bool                                    isInvite(std::string const & name);
+        void                                    sendToAll(Client & client_temp, std::string & message, int flag);
 
-        void                addInvite(Client const & name);
-        void                eraseInvite(std::string const & name);
-        bool                isInvite(std::string const & name);
-        void                sendToAll(Client & client_temp, std::string & message);
-
-        std::vector<std::string>::iterator findOperator(std::string const & name);
+        std::vector<std::string>::iterator      findOperator(std::string const & name);
 
     private:
-        std::map<std::string, Client>   _members;
-        std::vector<std::string>        _operators;
-        std::map<std::string, Client>        _inviteList;
-        std::map<std::string, std::string>        _banList;
-        std::string                     _password;
-        std::string                     _subject;
-        size_t                          _limit;
-        std::string                     _name;
+    
+        std::map<std::string, Client>           _members;
+        std::vector<std::string>                _operators;
+        std::map<std::string, Client>           _inviteList;
+        std::map<std::string, std::string>      _banList;
+        std::string                             _password;
+        std::string                             _subject;
+        size_t                                  _limit;
+        std::string                             _name;
         
-        bool                            _inviteOnlyIsSet;
-        bool                            _topicRestrictionIsSet;
-        bool                            _passwordIsSet;
-        bool                            _limitIsSet;
-        bool                            _topic;
+        bool                                    _inviteOnlyIsSet;
+        bool                                    _topicRestrictionIsSet;
+        bool                                    _passwordIsSet;
+        bool                                    _limitIsSet;
+        bool                                    _topic;
 };
 
 #endif

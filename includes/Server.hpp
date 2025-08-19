@@ -83,6 +83,8 @@ class   Server
         void                connectionReply(Client & client_temp);
         void                joinReply(Client & client, Channel const & channel);
         void                checkDisconnectClient(void);
+        void                checkEmptyChannel(void);
+        void                disconnectToChannel(Client & client);
         void                bytesReceived(Client & client_temp, std::string & buf);
         int                 execCMD(Client & client_temp, std::string & req);
         void                parseCMD(std::string & req, std::string & cmd, std::vector<std::string> & args);

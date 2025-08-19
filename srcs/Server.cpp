@@ -282,6 +282,7 @@ void    Server::serverListen(void)
                         }
                     }
                     checkDisconnectClient();
+                    checkEmptyChannel();
                 }
             }
         }
@@ -352,6 +353,27 @@ void    Server::connectionReply(Client & client_temp)
     return ;
 }
 
+
+
+/********* Disconnecting Client *********/
+
+
+
+void    Server::disconnectToChannel(Client & client)
+{
+    for (channel_map::iterator it = _channelDB.begin(); it != _channelDB.end(); it++)
+    {
+        Channel & chan = it->second;
+        if (isOnTheChannel(chan.getName(), client.getClientNickname()))
+        {
+            std::string message = "Client quit";
+            chan.sendToAll(client, message, QUIT_MESSAGE);
+            chan.eraseMember(client); 
+        }
+    }
+    return ;
+}
+
 void    Server::checkDisconnectClient(void)
 {
     for (client_map::iterator it = _clientsDB.begin(); it != _clientsDB.end();)
@@ -359,6 +381,7 @@ void    Server::checkDisconnectClient(void)
         
         if (it->second.getDisconnectClient())
         {
+            disconnectToChannel(it->second);
             std::cout << BLUE << "Client déconnecté : " << it->second.getSocket() << END << std::endl;
             close(it->second.getSocket());
             FD_CLR(it->second.getSocket(), &_masterSet);
@@ -506,6 +529,22 @@ bool    Server::isOnTheChannel(std::string const & name, std::string const & nic
     if (it == _channelDB.at(name).getMembers().end())
         return false;
     return true;
+}
+
+void    Server::checkEmptyChannel(void)
+{
+    for (channel_map::iterator it = _channelDB.begin(); it != _channelDB.end();)
+    {
+        if (it->second.getMembers().empty())
+        {
+            channel_map::iterator temp = it;
+            it++;
+            _channelDB.erase(temp);
+        }
+        else
+            it++;
+    }
+    return ;
 }
 
 
@@ -1356,7 +1395,7 @@ void    Server::sendToChannel(Client & client_temp, std::string & target, std::s
         client_temp.getBufOUT() += ERR_CANNOTSENDTOCHAN(_serverName, client_temp.getClientNickname(), target);
         return ;
     }
-    channel_target.sendToAll(client_temp, message);
+    channel_target.sendToAll(client_temp, message, PRIV_MESSAGE);
     return ;
 }
 

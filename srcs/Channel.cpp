@@ -280,13 +280,17 @@ bool    Channel::isInvite(std::string const & name)
         return false;
 }
 
-void    Channel::sendToAll(Client & client_temp, std::string & message)
+void    Channel::sendToAll(Client & client_temp, std::string & message, int flag)
 {
+    std ::string buf;
     for (std::map<std::string, Client>::iterator it = _members.begin(); it != _members.end(); it++)
     {
         if (client_temp.getClientNickname() != it->second.getClientNickname())
         {
-            std::string buf = PRIVMSG_REPLY(client_temp.getClientNickname(), this->_name, message);
+            if (flag == PRIV_MESSAGE)
+                buf = PRIVMSG_REPLY(client_temp.getClientNickname(), this->_name, message);
+            else if (flag == QUIT_MESSAGE)
+                buf = ":" + client_temp.getClientNickname() + " QUIT :" + message + "\r\n";
             it->second.getBufOUT() += buf;
             if (send(it->second.getSocket(), it->second.getBufOUT().c_str(), it->second.getBufOUT().size(), 0) == -1)
             {

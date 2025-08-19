@@ -264,8 +264,6 @@ void    Server::serverListen(void)
                     Client & client_temp = _clientsDB[socket];
                     readClient(client_temp, socket);
                     connectionReply(client_temp);
-                    std::cout << RED "CLIENT USERNAME = " << client_temp.getClientUsername() << END << std::endl;
-                    std::cout << RED "CLIENT REALNAME = " << client_temp.getClientRealname() << END << std::endl;
                     for (std::map<int, Client>::iterator it = _clientsDB.begin(); it != _clientsDB.end(); ++it) 
                     {
                         Client &    cl = it->second;
@@ -497,7 +495,7 @@ bool    Server::ChannelExist(std::string const & name) const
     return true;
 }
 
-bool    Server::isAlreadyOnTheChannel(std::string const & name, std::string const & nickname) const
+bool    Server::isOnTheChannel(std::string const & name, std::string const & nickname) const
 {
     std::map<std::string, Client>::const_iterator it;
 
@@ -799,7 +797,7 @@ void    Server::JOIN(Client & client_temp, std::vector<std::string> & args, std:
             {
                 if (_channelDB.at(it->first).limitIsSet() && _channelDB.at(it->first).getLimit() <= _channelDB.at(it->first).getMembers().size())
                      client_temp.getBufOUT() += ERR_CHANNELISFULL(_serverName, client_temp.getClientNickname(), it->first);
-                else if (isAlreadyOnTheChannel(it->first, client_temp.getClientNickname()))
+                else if (isOnTheChannel(it->first, client_temp.getClientNickname()))
                     client_temp.getBufOUT() += ERR_USERONCHANNEL(_serverName, client_temp.getClientNickname(), it->first);
                 else if (_channelDB.at(it->first).isInviteOnly())
                     checkInviteList(_channelDB.at(it->first), client_temp, _serverName, it->second);
@@ -847,12 +845,12 @@ void Server::TOPIC(Client &  client_temp, std::vector<std::string> & args) {
             client_temp.getBufOUT() += ERR_NOSUCHCHANNEL(_serverName, client_temp.getClientNickname(), channel);
             return;
         }
-        if(!isAlreadyOnTheChannel(channel, client_temp.getClientNickname()))
+        if(!isOnTheChannel(channel, client_temp.getClientNickname()))
         {
             client_temp.getBufOUT() += ERR_NOTONCHANNEL(_serverName, client_temp.getClientNickname(), channel);
             return;
         }
-        if(args.size() == 1 && isAlreadyOnTheChannel(channel, client_temp.getClientNickname()))
+        if(args.size() == 1 && isOnTheChannel(channel, client_temp.getClientNickname()))
         {
             if(!this->_channelDB.at(channel).getTopic().empty())
             {
@@ -980,7 +978,7 @@ bool Server::checkChannel(Client & client_temp, std::string & channelName, std::
         client_temp.getBufOUT() += ERR_NOSUCHCHANNEL(_serverName, client_temp.getClientNickname(), channelName);
         return (false);
     }
-    if (!isAlreadyOnTheChannel(channelName, client_temp.getClientNickname()))
+    if (!isOnTheChannel(channelName, client_temp.getClientNickname()))
     {
         client_temp.getBufOUT() += ERR_NOTONCHANNEL(_serverName, client_temp.getClientNickname(), channelName);
         return (false);
@@ -1044,7 +1042,7 @@ bool    Server::execMode(Client & client_temp, Channel & channel, std::string & 
         {
             if(args.size() > j)
             {
-                if (isAlreadyOnTheChannel(channelName, args[j]))
+                if (isOnTheChannel(channelName, args[j]))
                 {
                     channel.setOperator(actualSign, args[j]);
                     channel.broadcast(MODE_REPLY(client_temp.getClientNickname(), channel.getName(), actualSign + 'o', args[j]));
@@ -1161,7 +1159,7 @@ void Server::PART(Client &  client_temp, std::vector<std::string> & args) {
                 client_temp.getBufOUT() += ERR_NOSUCHCHANNEL(_serverName, client_temp.getClientNickname(), channels[i]);
                 continue ;
             }
-            if(!isAlreadyOnTheChannel(channels[i], client_temp.getClientNickname()))
+            if(!isOnTheChannel(channels[i], client_temp.getClientNickname()))
             {
                 client_temp.getBufOUT() += ERR_NOTONCHANNEL(_serverName, client_temp.getClientNickname(), channels[i]);
                 continue ;
@@ -1263,7 +1261,7 @@ void Server::INVITE(Client &  client_temp, std::vector<std::string> & args) {
     }
     if(ChannelExist(channel))
     {
-        if(!isAlreadyOnTheChannel(channel, client_temp.getClientNickname()))
+        if(!isOnTheChannel(channel, client_temp.getClientNickname()))
         {
             client_temp.getBufOUT() += ERR_NOTONCHANNEL(_serverName, client_temp.getClientNickname(), channel);
             return ;
@@ -1272,7 +1270,7 @@ void Server::INVITE(Client &  client_temp, std::vector<std::string> & args) {
         {
             if(this->getChannelDB().find(channel)->second.isOperator(client_temp.getClientNickname()))
             {
-                if(isAlreadyOnTheChannel(channel, invited))
+                if(isOnTheChannel(channel, invited))
                 {
                     client_temp.getBufOUT() += ERR_USERONCHANNEL(_serverName, client_temp.getClientNickname(), channel);
                     return ;
@@ -1290,7 +1288,7 @@ void Server::INVITE(Client &  client_temp, std::vector<std::string> & args) {
         }
         else
         {
-            if(isAlreadyOnTheChannel(channel, invited))
+            if(isOnTheChannel(channel, invited))
             {
                 client_temp.getBufOUT() += ERR_USERONCHANNEL(_serverName, client_temp.getClientNickname(), channel);
                 return ;
@@ -1349,7 +1347,7 @@ void    Server::sendToChannel(Client & client_temp, std::string & target, std::s
         return ;
     }
     Channel channel_target = _channelDB[target];
-    if (!isAlreadyOnTheChannel(target, client_temp.getClientNickname()))
+    if (!isOnTheChannel(target, client_temp.getClientNickname()))
     {
         client_temp.getBufOUT() += ERR_CANNOTSENDTOCHAN(_serverName, client_temp.getClientNickname(), target);
         return ;

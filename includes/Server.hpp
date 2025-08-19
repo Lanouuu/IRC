@@ -65,6 +65,7 @@ class   Server
         std::string         _serverNetwork;
         std::string         _serverVersion;
         std::string         _serverDate;
+        Client              _bot;
 
         void                checkArgs(int ac);
         void                parsePort(std::string & port);
@@ -103,7 +104,7 @@ class   Server
         bool                checkModeStr(Client & client_temp, std::string & modeString);
         bool                checkChannel(Client & client_temp, std::string & channelName, std::string & modeString, std::string & cmd);
         bool                execMode(Client & client_temp, Channel & channel, std::string & modeString, std::string & channelName, std::vector<std::string> & args);
-        bool                isAlreadyOnTheChannel(std::string const & name, std::string const & nickname) const;
+        bool                isOnTheChannel(std::string const & name, std::string const & nickname) const;
         void                parseTargets(std::string & targetsStr, std::vector<std::string> & targets);
         void                parseMessage(std::vector<std::string> & args, std::string & message);
         void                sendToChannel(Client & client_temp, std::string & target, std::string & message);

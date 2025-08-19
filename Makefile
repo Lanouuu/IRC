@@ -26,6 +26,7 @@ SOURCES_SERVER	=	Server.cpp \
 					Client.cpp \
 					Utils.cpp \
 					numerics.cpp \
+					Bot.cpp \
 
 SOURCES_CHANNEL	=	Channel.cpp \
 	
@@ -54,6 +55,7 @@ INCLUDES		=	${INC_PATH}Server.hpp \
 					${INC_PATH}Utils.hpp \
 					${INC_PATH}numerics.hpp \
 					${INC_PATH}Channel.hpp \
+					${INC_PATH}Bot.hpp \
 
 # **************************************************************************** #
 #                                                                              #

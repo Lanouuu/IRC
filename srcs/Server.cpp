@@ -12,7 +12,7 @@ Server::Server(void)
 }
 
 Server::Server(int ac, char **av) 
-    : _serverIP("127.0.0.1"), 
+    : _serverIP("0.0.0.0"), 
     _serverSocket(-1),
     _serverName("irc.42.fr"), 
     _serverNetwork("42IRC"), 

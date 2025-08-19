@@ -104,7 +104,10 @@ Client &    Server::getClient(const std::string &nick)
     for (it = _clientsDB.begin(); it != _clientsDB.end(); it++)
     {
         if(it->second.getClientNickname() == nick)
+        {
+            std::cout << "ici 108" << std::endl;
             return it->second;
+        }
     }
     return it->second;
 }
@@ -1297,6 +1300,7 @@ void Server::INVITE(Client &  client_temp, std::vector<std::string> & args) {
             {
                 this->getChannelDB().find(channel)->second.addInvite(getClient(invited));
                 client_temp.getBufOUT() += RPL_INVITING(_serverName, client_temp.getClientNickname(), invited, channel);
+                getClient(invited).getBufOUT() += RPL_MY_INVITE(_serverName, client_temp, invited, channel);
                 return ;
             }
         }

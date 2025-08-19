@@ -47,7 +47,10 @@ void    Channel::setPassword(std::string const & mode, std::string const & passw
 
 void    Channel::setSubject(std::string const & subject)
 {
-    _subject = subject;
+    std::string topic = subject;
+    if(topic[0] == ':')
+        topic.erase(0, 1);
+    _subject = topic;
 }
 
 void    Channel::setIsTopic(std::string const & mode)

@@ -101,7 +101,7 @@ std::string RPL_INVITING(const std::string & server, const std::string & nick, c
 
 std::string RPL_MY_INVITE(const std::string & server, Client & client, const std::string & target, const std::string & chan)
 {
-    std::string buf = ":" + client.getClientNickname() + "!" + client.getClientUsername() + "@" + server + " INVITE " + target + " :" + chan + "\r\n";
+    std::string buf = ":" + client.getClientNickname() + "!" + client.getClientUsername() + "@" + server + " INVITE " + target + " " + chan + "\r\n";
     return (buf);   
 }
 

@@ -1,18 +1,22 @@
 #ifndef BOT_HPP
 # define BOT_HPP
 
-#include <iostream>
 #include <vector>
+#include <cstdlib>
+#include <ctime>
+#include <iostream>
+
+class Server;
+class Client;
 
 class   Bot
 {
     public:
         
         Bot(void);
-        Bot(const Bot & src);
         ~Bot(void);
 
-        Bot &   operator=(const Bot & rhs);
+        void    sendJoke(Client & client, std::string const & message, Server & server);
 
     private:
         std::string _nick;

@@ -17,9 +17,11 @@
 # include "Client.hpp"
 # include "Utils.hpp"
 # include "Channel.hpp"
+# include "Bot.hpp"
 
 class Client;
 class Channel;
+class Bot;
 
 typedef std::map<int, Client> client_map;
 typedef std::map<std::string, Channel> channel_map;
@@ -65,7 +67,7 @@ class   Server
         std::string         _serverNetwork;
         std::string         _serverVersion;
         std::string         _serverDate;
-        Client              _bot;
+        Bot                 _bot;
 
         void                checkArgs(int ac);
         void                parsePort(std::string & port);

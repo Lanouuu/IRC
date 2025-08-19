@@ -1360,6 +1360,11 @@ void    Server::sendToUser(Client & client_temp, std::string & target, std::stri
 {
     Client  client_target;
     int     flag = 0;
+    if (target == "bot")
+    {
+        _bot.sendJoke(client_temp, message, *this);
+        return ;
+    }
     for (client_map::iterator it = _clientsDB.begin(); it != _clientsDB.end(); it++)
     {
         if (it->second.getClientNickname() == target)

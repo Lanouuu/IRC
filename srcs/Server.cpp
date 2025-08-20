@@ -816,6 +816,8 @@ static void checkInviteList(Channel & channel, Client & client, std::string cons
                 client.getBufOUT() += ERR_BADCHANNELKEY(serverName, client.getClientNickname(), channel.getName());
         }
     }
+    else
+        client.getBufOUT() += ERR_INVITEONLYCHAN(serverName, client.getClientNickname(), channel.getName());
 }
 
 void    Server::JOIN(Client & client_temp, std::vector<std::string> & args, std::string const & cmd)

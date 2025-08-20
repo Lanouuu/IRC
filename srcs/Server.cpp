@@ -1016,29 +1016,16 @@ void    Server::KICK(Client & client, std::string const & cmd, std::vector<std::
                 _channelDB.at(args[0]).getBanList().insert(std::pair<std::string, std::string>(args[1], _channelDB.at(args[0]).getMembers().find(args[1])->second.getClientRealname()));
                 if (_channelDB.at(args[0]).isOperator(args[1]) && _channelDB.at(args[0]).getOperators().size() == 1)
                 {
-                    std::cout << args[1] << " is operator" << std::endl;
                     if (_channelDB.at(args[0]).getMembers().size() > 1)
                     {
-                        std::cout << "Members left" << std::endl;
                         std::map<std::string, Client>::iterator it2;
                         for(it2 = _channelDB.at(args[0]).getMembers().begin(); it2 != _channelDB.at(args[0]).getMembers().end(); it2++)
                         {
                             if(it2->second.getClientNickname() != client.getClientNickname())
-                            {
-                                std::cout << "Member found" << std::endl;
                                 break;
-                            }
                         }
-                        std::cout << "Adding to operator list" << std::endl;
                         _channelDB.at(args[0]).addOperator(it2->first);
-                        std::string mode = "MODE";
-                        std::vector<std::string> arg;
-                        arg.push_back(_channelDB.at(args[0]).getName());
-                        arg.push_back("+o");
-                        arg.push_back(it2->first);
-                        MODE(client, mode, arg);
-                        // it2->second.getBufOUT() += MODE_REPLY(client.getClientNickname(), _channelDB.at(args[0]).getName(), "+o", it2->second.getClientNickname());
-                        // std::cout << it2->second.getBufOUT() << std::endl;
+                        _channelDB.at(args[0]).broadcast(":" + _serverName + " MODE " + args[0] + " +o " + it2->first + "\r\n");
                     }
                     _channelDB.at(args[0]).eraseOperator(args[1]);
                 }

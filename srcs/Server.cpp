@@ -368,34 +368,6 @@ void    Server::disconnectToChannel(Client & client)
         {
             std::string message = "Client quit";
             chan.sendToAll(client, message, QUIT_MESSAGE);
-            
-            if(chan.isOperator(client.getClientNickname()) == true)
-            {
-                //dernier op et encore du monde dans le chan
-                if(chan.getOperators().size() == 1 && chan.getMembers().size() > 1)
-                {
-                    std::map<std::string, Client>::iterator it2;
-                    for(it2 = chan.getMembers().begin(); it2 != chan.getMembers().end(); it2++)
-                    {
-                        if(it2->second.getClientNickname() != client.getClientNickname())
-                            break;
-                    }
-
-                    chan.addOperator(it2->first);
-                    chan.eraseOperator(client.getClientNickname());
-                    chan.eraseMember(client);
-                    // chan.broadcast(RPL_PART(_serverName, client.getClientNickname(), client.getClientUsername(), chan.getName(), "0"));
-                    chan.broadcast(":" + _serverName + " MODE " + chan.getName() + " +o " + it2->first + "\r\n");
-                    continue ;
-                }
-                
-                //if last pers on server -> remove server
-                if(chan.getOperators().size() == 1 && chan.getMembers().size() == 1)
-                {
-                    std::cout << "ici 1129" << std::endl;
-                    _channelDB.erase(chan.getName());
-                }
-            }
             chan.eraseMember(client);
         }
     }
@@ -641,6 +613,7 @@ static int checkNickFormat(std::string & nick)
 
 void    Server::NICK(Client &  client_temp, std::vector<std::string> & args)
 {
+    std::cout << "in nick" << std::endl;
     if (args.empty())
     {
         client_temp.getBufOUT() += ERR_NONICKNAMEGIVEN(_serverName, client_temp.getClientNickname(), client_temp.getClientUsername());
@@ -658,6 +631,11 @@ void    Server::NICK(Client &  client_temp, std::vector<std::string> & args)
             client_temp.getBufOUT() += ERR_NICKNAMEINUSE(_serverName, args[0], client_temp.getClientUsername());
             return ;
         }
+    }
+    if (client_temp.getIsConnected())
+    {
+        client_temp.getBufOUT() += NICK_ERR_REPLY(_serverName, client_temp.getClientNickname());
+        return ;
     }
     client_temp.setClientNickname(args[0]);
     return ;
@@ -712,6 +690,28 @@ void    Server::QUIT(Client & client_temp)
     {
         client_temp.getBufOUT() += ERR_NOTREGISTERED(_serverName, client_temp.getClientNickname());
         return ;
+    }
+
+    for(std::map<std::string, Channel>::iterator it = this->_channelDB.begin(); it != this->_channelDB.end(); it++)
+    {
+        if(it->second.isOperator(client_temp.getClientNickname()) == true)
+        {
+            //dernier op et encore du monde dans le it->second
+            if(it->second.getOperators().size() == 1 && it->second.getMembers().size() > 1)
+            {
+                std::map<std::string, Client>::iterator it2;
+                for(it2 = it->second.getMembers().begin(); it2 != it->second.getMembers().end(); it2++)
+                {
+                    if(it2->second.getClientNickname() != client_temp.getClientNickname())
+                        break;
+                }
+    
+                it->second.addOperator(it2->first);
+                it->second.eraseOperator(client_temp.getClientNickname());
+                it->second.broadcast(":" + _serverName + " MODE " + it->second.getName() + " +o " + it2->first + "\r\n");
+                continue ;
+            }
+        }
     }
     client_temp.getDisconnectClient() = true;
     return ;
@@ -1236,7 +1236,6 @@ void Server::PART(Client &  client_temp, std::vector<std::string> & args) {
     std::cout << BLUE "PART COMMAND" END << std::endl;
     if(args.empty())
     {
-        std::cout << "ici 1073" << std::endl;
         client_temp.getBufOUT() += ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), client_temp.getClientUsername());
         return;
     }
@@ -1297,12 +1296,9 @@ void Server::PART(Client &  client_temp, std::vector<std::string> & args) {
                     continue ;
                 }
                 
-                //if last pers on server -> remove server
+                // if last pers on server -> remove server
                 if(it->second.getOperators().size() == 1 && it->second.getMembers().size() == 1)
-                {
-                    std::cout << "ici 1129" << std::endl;
                     _channelDB.erase(it->second.getName());
-                }
             }
             else {
                 it->second.broadcast(RPL_PART(_serverName, client_temp.getClientNickname(), client_temp.getClientUsername(), channels[i], reason));
@@ -1310,7 +1306,6 @@ void Server::PART(Client &  client_temp, std::vector<std::string> & args) {
             }
         }
         else {
-            std::cout << "ici 1091" << std::endl;
             client_temp.getBufOUT() += ERR_NOSUCHCHANNEL(_serverName, client_temp.getClientNickname(), channels[i]);
         }        
     }

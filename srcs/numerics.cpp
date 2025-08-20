@@ -358,3 +358,9 @@ std::string MODE_ERR_REPLY(const std::string & server, const std::string & nick,
      std::string buf = RED ":" + server  + " " + nick + " " + channel + " :" + reason + END + "\r\n";
     return (buf);   
 }
+
+std::string NICK_ERR_REPLY(const std::string & server, const std::string & nick)
+{
+     std::string buf = RED ":" + server + " " + nick + " :You are not allowed to change your nickname" + END + "\r\n";
+    return (buf);   
+}

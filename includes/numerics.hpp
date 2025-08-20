@@ -62,4 +62,5 @@ std::string MODE_REPLY(const std::string &nick, const std::string & channel, con
 std::string KICK_REPLY(const std::string &nick, const std::string &username, const std::string &victimName, const std::string & channel, const std::string & args);
 std::string PRIVMSG_REPLY(const std::string & nick, const std::string & target, const std::string & message);
 std::string MODE_ERR_REPLY(const std::string & server, const std::string & nick, const std::string & channel, const std::string & reason);
+std::string NICK_ERR_REPLY(const std::string & server, const std::string & nick);
 #endif

@@ -1106,22 +1106,30 @@ bool    Server::execMode(Client & client_temp, Channel & channel, std::string & 
         }
         else if (modeString[i] == 'l')
         {
-            if(args.size() > j)
+            size_t len;
+            if ((len = stringToSizeT(args[j])) == 0)
             {
-                size_t len;
-                if ((len = stringToSizeT(args[j])) == 0)
+                client_temp.getBufOUT() += ERR_INVALIDMODEPARAM(_serverName, client_temp.getClientNickname(), channelName, actualSign + 'l', args[j]);
+                return (false);
+            }
+            if (actualSign == "+")
+            {
+                if(args.size() > j)
                 {
-                    client_temp.getBufOUT() += ERR_INVALIDMODEPARAM(_serverName, client_temp.getClientNickname(), channelName, actualSign + 'l', args[j]);
+                    channel.setLimit(actualSign, len);
+                    channel.broadcast(MODE_REPLY(client_temp.getClientNickname(), channel.getName(), actualSign + 'l', args[j]));
+                    ++j;
+                }
+                else
+                {
+                    client_temp.getBufOUT() += ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), "MODE");
                     return (false);
                 }
-                channel.setLimit(actualSign, len);
-                channel.broadcast(MODE_REPLY(client_temp.getClientNickname(), channel.getName(), actualSign + 'l', args[j]));
-                ++j;
             }
             else
             {
-                client_temp.getBufOUT() += ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), "MODE");
-                return (false);
+                channel.setLimit(actualSign, 0);
+                channel.broadcast(MODE_REPLY(client_temp.getClientNickname(), channel.getName(), actualSign + 'l', ""));
             }
         }
         else if (modeString[i] == 'k')
@@ -1135,11 +1143,12 @@ bool    Server::execMode(Client & client_temp, Channel & channel, std::string & 
                 }
                 channel.setPassword(actualSign, args[j]);
                 channel.broadcast(MODE_REPLY(client_temp.getClientNickname(), channel.getName(), actualSign + 'k', args[j]));
+                j++;
             }
             else if (actualSign == "-")
             {
-                channel.setPassword(actualSign, args[j]);
-                channel.broadcast(MODE_REPLY(client_temp.getClientNickname(), channel.getName(), actualSign + 'k', args[j]));
+                channel.setPassword(actualSign, "");
+                channel.broadcast(MODE_REPLY(client_temp.getClientNickname(), channel.getName(), actualSign + 'k', ""));
             }
         }
     }

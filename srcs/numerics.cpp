@@ -328,7 +328,7 @@ std::string ERR_CHANNELISFULL(const std::string & server, const std::string & ni
 std::string MODE_REPLY(const std::string &nick, const std::string & channel, const std::string & mode, const std::string & args)
 {
     std::string buf;
-    buf = ":" + nick, + " MODE " + channel + " " + mode;
+    buf = ":" + nick + " MODE " + channel + " " + mode;
     if (!args.empty())
         buf += " " + args;
     buf += "\r\n";

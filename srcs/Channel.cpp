@@ -39,7 +39,7 @@ void    Channel::setPassword(std::string const & mode, std::string const & passw
     }
     else
     {
-        _password = "";
+        _password = password;
         _passwordIsSet = false;
     }
 }
@@ -72,7 +72,7 @@ void    Channel::setLimit(std::string const & mode, size_t const & limit)
     else
     {
         _limitIsSet = false;
-        _limit = 0;
+        _limit = limit;
     }
 }
 

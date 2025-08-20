@@ -28,7 +28,7 @@ class   Channel
         void                                    setLimit(std::string const & mode, size_t const & limit);
         void                                    setInvitation(std::string const & mode);
         void                                    setName(std::string const & name);
-        void                                    setOperator(std::string const & mode, std::string const & name);
+        int                                     setOperator(Client & client, std::string const & mode, std::string const & name, std::string const & serverName, std::string const & target);
         std::string const &                     getPassword() const;
         std::string const &                     getTopic() const;
         size_t const &                          getLimit() const;

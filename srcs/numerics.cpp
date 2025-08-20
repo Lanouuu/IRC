@@ -352,3 +352,9 @@ std::string PRIVMSG_REPLY(const std::string & nick, const std::string & target, 
     std::string buf = ":" + nick + " PRIVMSG " + target + " :" + message + "\r\n";
     return (buf);
 }
+
+std::string MODE_ERR_REPLY(const std::string & server, const std::string & nick, const std::string & channel, const std::string & reason)
+{
+     std::string buf = RED ":" + server  + " " + nick + " " + channel + " :" + reason + END + "\r\n";
+    return (buf);   
+}

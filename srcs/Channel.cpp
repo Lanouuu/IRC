@@ -92,32 +92,40 @@ void    Channel::setName(std::string const & name)
     _name = name;
 }
 
-void    Channel::setOperator(std::string const & mode, std::string const & name)
+int    Channel::setOperator(Client & client, std::string const & mode, std::string const & name, std::string const & serverName, std::string const & target)
 {
     if (mode == "+")
     {
         if (isOperator(name))
-            return;
+            return 1;
         _operators.push_back(name);
     }
     else
     {
-        if (_operators.size() == 1)
+        if (_operators.size() == 1 && target == client.getClientNickname())
         {
             //error
+            client.getBufOUT() += MODE_ERR_REPLY(serverName, client.getClientNickname(), _name, "Cannot remove operator privileges (you're the last channel operator)");
+            return 0;
         }
         else
         {
             std::vector<std::string>::iterator it = std::find(_operators.begin(), _operators.end(), name);
             if (it != _operators.end())
+            {
                 _operators.erase(it);
+                return 1;
+            }
             else
             {
                 //error
+                client.getBufOUT() += MODE_ERR_REPLY(serverName, client.getClientNickname(), _name, "Cannot remove operator privileges, USER " + target + " is not an operator");
+                return 0;
             }
 
         }
     }
+    return 1;
 }
 
 std::string const & Channel::getPassword() const

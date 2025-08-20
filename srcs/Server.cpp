@@ -960,6 +960,41 @@ void Server::TOPIC(Client &  client_temp, std::vector<std::string> & args) {
 /********* KICK **********/
 
 
+// void    Server::KICK(Client & client, std::string const & cmd, std::vector<std::string> const & args)
+// {
+//     if (args.size() < 2)
+//     {
+//         client.getBufOUT() += ERR_NEEDMOREPARAMS(_serverName, client.getClientNickname(), cmd);
+//         return ;
+//     }
+//     if (ChannelExist(args[0]))
+//     {
+//         if (_channelDB.at(args[0]).isOperator(client.getClientNickname()))
+//         {
+//             if (_channelDB.at(args[0]).getMembers().find(args[1]) != _channelDB.at(args[0]).getMembers().end())
+//             {
+//                 if (args.size() > 2)
+//                     _channelDB.at(args[0]).broadcast(KICK_REPLY(client.getClientNickname(), client.getClientUsername(), args[1], args[0], args[2]));
+//                 else
+//                     _channelDB.at(args[0]).broadcast(KICK_REPLY(client.getClientNickname(), client.getClientUsername(), args[1], args[0], ""));       
+//                 _channelDB.at(args[0]).getBanList().insert(std::pair<std::string, std::string>(args[1], _channelDB.at(args[0]).getMembers().find(args[1])->second.getClientRealname()));
+//                 _channelDB.at(args[0]).getMembers().erase(args[1]);
+//                 if (_channelDB.at(args[0]).isOperator(args[1]))
+//                     _channelDB.at(args[0]).eraseOperator(args[1]);
+//                 if (_channelDB.at(args[0]).getMembers().size() == 0)
+//                     _channelDB.erase(args[0]);
+//             }
+//             else
+//                 client.getBufOUT() += ERR_NOTONCHANNEL(_serverName, client.getClientNickname(), cmd);
+//         }
+//         else
+//             client.getBufOUT() += ERR_CHANOPRIVSNEEDED(_serverName, client.getClientNickname(), cmd);
+//     }
+//     else
+//         client.getBufOUT() += ERR_NOSUCHCHANNEL(_serverName, client.getClientNickname(), cmd);
+// }
+
+
 void    Server::KICK(Client & client, std::string const & cmd, std::vector<std::string> const & args)
 {
     if (args.size() < 2)
@@ -969,18 +1004,53 @@ void    Server::KICK(Client & client, std::string const & cmd, std::vector<std::
     }
     if (ChannelExist(args[0]))
     {
+        std::string reason;
+
+        for (size_t i = 2; i < args.size(); i++)
+        {
+            if (reason.empty())
+                reason += args[i];
+            else
+                reason += " " + args[i];
+        }
         if (_channelDB.at(args[0]).isOperator(client.getClientNickname()))
         {
             if (_channelDB.at(args[0]).getMembers().find(args[1]) != _channelDB.at(args[0]).getMembers().end())
             {
                 if (args.size() > 2)
-                    _channelDB.at(args[0]).broadcast(KICK_REPLY(client.getClientNickname(), client.getClientUsername(), args[1], args[0], args[2]));
+                    _channelDB.at(args[0]).broadcast(KICK_REPLY(client.getClientNickname(), client.getClientUsername(), args[1], args[0], reason));
                 else
                     _channelDB.at(args[0]).broadcast(KICK_REPLY(client.getClientNickname(), client.getClientUsername(), args[1], args[0], ""));       
                 _channelDB.at(args[0]).getBanList().insert(std::pair<std::string, std::string>(args[1], _channelDB.at(args[0]).getMembers().find(args[1])->second.getClientRealname()));
-                _channelDB.at(args[0]).getMembers().erase(args[1]);
-                if (_channelDB.at(args[0]).isOperator(args[1]))
+                if (_channelDB.at(args[0]).isOperator(args[1]) && _channelDB.at(args[0]).getOperators().size() == 1)
+                {
+                    std::cout << args[1] << " is operator" << std::endl;
+                    if (_channelDB.at(args[0]).getMembers().size() > 1)
+                    {
+                        std::cout << "Members left" << std::endl;
+                        std::map<std::string, Client>::iterator it2;
+                        for(it2 = _channelDB.at(args[0]).getMembers().begin(); it2 != _channelDB.at(args[0]).getMembers().end(); it2++)
+                        {
+                            if(it2->second.getClientNickname() != client.getClientNickname())
+                            {
+                                std::cout << "Member found" << std::endl;
+                                break;
+                            }
+                        }
+                        std::cout << "Adding to operator list" << std::endl;
+                        _channelDB.at(args[0]).addOperator(it2->first);
+                        std::string mode = "MODE";
+                        std::vector<std::string> arg;
+                        arg.push_back(_channelDB.at(args[0]).getName());
+                        arg.push_back("+o");
+                        arg.push_back(it2->first);
+                        MODE(client, mode, arg);
+                        // it2->second.getBufOUT() += MODE_REPLY(client.getClientNickname(), _channelDB.at(args[0]).getName(), "+o", it2->second.getClientNickname());
+                        // std::cout << it2->second.getBufOUT() << std::endl;
+                    }
                     _channelDB.at(args[0]).eraseOperator(args[1]);
+                }
+                _channelDB.at(args[0]).getMembers().erase(args[1]);
                 if (_channelDB.at(args[0]).getMembers().size() == 0)
                     _channelDB.erase(args[0]);
             }
@@ -993,7 +1063,6 @@ void    Server::KICK(Client & client, std::string const & cmd, std::vector<std::
     else
         client.getBufOUT() += ERR_NOSUCHCHANNEL(_serverName, client.getClientNickname(), cmd);
 }
-
 
 /********* MODE *********/
 
@@ -1034,11 +1103,13 @@ bool Server::checkModeStr(Client & client_temp, std::string & modeString)
 {
     if (modeString.find_first_not_of("+-itkol") != std::string::npos)
     {
+        std::cout << "ici" << std::endl;
         client_temp.getBufOUT() += ERR_UNKNOWNMODE(_serverName, client_temp.getClientNickname(), modeString);
         return (false);
     }
     if (isalpha(modeString[0]) || !isalpha(modeString[modeString.size() - 1]))
     {
+        std::cout << "ici2" << std::endl;
         client_temp.getBufOUT() += ERR_UNKNOWNMODE(_serverName, client_temp.getClientNickname(), modeString);
         return (false);
     }
@@ -1088,8 +1159,8 @@ bool    Server::execMode(Client & client_temp, Channel & channel, std::string & 
             {
                 if (isOnTheChannel(channelName, args[j]))
                 {
-                    channel.setOperator(actualSign, args[j]);
-                    channel.broadcast(MODE_REPLY(client_temp.getClientNickname(), channel.getName(), actualSign + 'o', args[j]));
+                    if (channel.setOperator(client_temp, actualSign, args[j], _serverName, args[j]) == 1)
+                        channel.broadcast(MODE_REPLY(client_temp.getClientNickname(), channel.getName(), actualSign + 'o', args[j]));
                     ++j;
                 }
                 else
@@ -1106,16 +1177,16 @@ bool    Server::execMode(Client & client_temp, Channel & channel, std::string & 
         }
         else if (modeString[i] == 'l')
         {
-            size_t len;
-            if ((len = stringToSizeT(args[j])) == 0)
-            {
-                client_temp.getBufOUT() += ERR_INVALIDMODEPARAM(_serverName, client_temp.getClientNickname(), channelName, actualSign + 'l', args[j]);
-                return (false);
-            }
             if (actualSign == "+")
             {
                 if(args.size() > j)
                 {
+                    size_t len;
+                    if ((len = stringToSizeT(args[j])) == 0)
+                    {
+                        client_temp.getBufOUT() += ERR_INVALIDMODEPARAM(_serverName, client_temp.getClientNickname(), channelName, actualSign + 'l', args[j]);
+                        return (false);
+                    }
                     channel.setLimit(actualSign, len);
                     channel.broadcast(MODE_REPLY(client_temp.getClientNickname(), channel.getName(), actualSign + 'l', args[j]));
                     ++j;

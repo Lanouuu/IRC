@@ -959,42 +959,6 @@ void Server::TOPIC(Client &  client_temp, std::vector<std::string> & args) {
 
 /********* KICK **********/
 
-
-// void    Server::KICK(Client & client, std::string const & cmd, std::vector<std::string> const & args)
-// {
-//     if (args.size() < 2)
-//     {
-//         client.getBufOUT() += ERR_NEEDMOREPARAMS(_serverName, client.getClientNickname(), cmd);
-//         return ;
-//     }
-//     if (ChannelExist(args[0]))
-//     {
-//         if (_channelDB.at(args[0]).isOperator(client.getClientNickname()))
-//         {
-//             if (_channelDB.at(args[0]).getMembers().find(args[1]) != _channelDB.at(args[0]).getMembers().end())
-//             {
-//                 if (args.size() > 2)
-//                     _channelDB.at(args[0]).broadcast(KICK_REPLY(client.getClientNickname(), client.getClientUsername(), args[1], args[0], args[2]));
-//                 else
-//                     _channelDB.at(args[0]).broadcast(KICK_REPLY(client.getClientNickname(), client.getClientUsername(), args[1], args[0], ""));       
-//                 _channelDB.at(args[0]).getBanList().insert(std::pair<std::string, std::string>(args[1], _channelDB.at(args[0]).getMembers().find(args[1])->second.getClientRealname()));
-//                 _channelDB.at(args[0]).getMembers().erase(args[1]);
-//                 if (_channelDB.at(args[0]).isOperator(args[1]))
-//                     _channelDB.at(args[0]).eraseOperator(args[1]);
-//                 if (_channelDB.at(args[0]).getMembers().size() == 0)
-//                     _channelDB.erase(args[0]);
-//             }
-//             else
-//                 client.getBufOUT() += ERR_NOTONCHANNEL(_serverName, client.getClientNickname(), cmd);
-//         }
-//         else
-//             client.getBufOUT() += ERR_CHANOPRIVSNEEDED(_serverName, client.getClientNickname(), cmd);
-//     }
-//     else
-//         client.getBufOUT() += ERR_NOSUCHCHANNEL(_serverName, client.getClientNickname(), cmd);
-// }
-
-
 void    Server::KICK(Client & client, std::string const & cmd, std::vector<std::string> const & args)
 {
     if (args.size() < 2)

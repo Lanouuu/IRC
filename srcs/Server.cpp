@@ -368,7 +368,35 @@ void    Server::disconnectToChannel(Client & client)
         {
             std::string message = "Client quit";
             chan.sendToAll(client, message, QUIT_MESSAGE);
-            chan.eraseMember(client); 
+            
+            if(chan.isOperator(client.getClientNickname()) == true)
+            {
+                //dernier op et encore du monde dans le chan
+                if(chan.getOperators().size() == 1 && chan.getMembers().size() > 1)
+                {
+                    std::map<std::string, Client>::iterator it2;
+                    for(it2 = chan.getMembers().begin(); it2 != chan.getMembers().end(); it2++)
+                    {
+                        if(it2->second.getClientNickname() != client.getClientNickname())
+                            break;
+                    }
+
+                    chan.addOperator(it2->first);
+                    chan.eraseOperator(client.getClientNickname());
+                    chan.eraseMember(client);
+                    // chan.broadcast(RPL_PART(_serverName, client.getClientNickname(), client.getClientUsername(), chan.getName(), "0"));
+                    chan.broadcast(":" + _serverName + " MODE " + chan.getName() + " +o " + it2->first + "\r\n");
+                    continue ;
+                }
+                
+                //if last pers on server -> remove server
+                if(chan.getOperators().size() == 1 && chan.getMembers().size() == 1)
+                {
+                    std::cout << "ici 1129" << std::endl;
+                    _channelDB.erase(chan.getName());
+                }
+            }
+            chan.eraseMember(client);
         }
     }
     return ;
@@ -1217,8 +1245,11 @@ void Server::PART(Client &  client_temp, std::vector<std::string> & args) {
                 if(it->second.getOperators().size() == 1 && it->second.getMembers().size() > 1)
                 {
                     std::map<std::string, Client>::iterator it2;
-                    it2 = it->second.getMembers().find(client_temp.getClientNickname());
-                    it2++;
+                    for(it2 = it->second.getMembers().begin(); it2 != it->second.getMembers().end(); it2++)
+                    {
+                        if(it2->second.getClientNickname() != client_temp.getClientNickname())
+                            break;
+                    }
                     it->second.addOperator(it2->first);
                     it->second.eraseOperator(client_temp.getClientNickname());
                     it->second.eraseMember(client_temp);

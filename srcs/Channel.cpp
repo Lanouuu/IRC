@@ -290,7 +290,7 @@ void    Channel::sendToAll(Client & client_temp, std::string & message, int flag
             if (flag == PRIV_MESSAGE)
                 buf = PRIVMSG_REPLY(client_temp.getClientNickname(), this->_name, message);
             else if (flag == QUIT_MESSAGE)
-                buf = ":" + client_temp.getClientNickname() + " QUIT :" + message + "\r\n";
+                buf = ":" + client_temp.getClientNickname() + "!" + client_temp.getClientUsername() + "@localhost" + " QUIT :" + message + "\r\n";
             it->second.getBufOUT() += buf;
             if (send(it->second.getSocket(), it->second.getBufOUT().c_str(), it->second.getBufOUT().size(), 0) == -1)
             {

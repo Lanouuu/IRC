@@ -86,7 +86,7 @@ std::string RPL_ENDOFNAMES(const std::string & server, const std::string & nick,
 std::string RPL_PART(const std::string & server, const std::string & nick, const std::string & user, const std::string & chan, const std::string & reason)
 {
     std::string buf;
-    if(!reason.empty())
+    if(reason == "0")
         buf = ":" + nick + "!" + user + "@" + server + " PART " + chan + " :" + reason + "\r\n";
     else
         buf = ":" + nick + "!" + user + "@" + server + " PART " + chan + "\r\n";

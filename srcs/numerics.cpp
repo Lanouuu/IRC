@@ -328,7 +328,7 @@ std::string ERR_CHANNELISFULL(const std::string & server, const std::string & ni
 std::string MODE_REPLY(const std::string &nick, const std::string & channel, const std::string & mode, const std::string & args)
 {
     std::string buf;
-    buf = ":" + nick, + " MODE " + channel + " " + mode;
+    buf = ":" + nick + " MODE " + channel + " " + mode;
     if (!args.empty())
         buf += " " + args;
     buf += "\r\n";
@@ -351,4 +351,10 @@ std::string PRIVMSG_REPLY(const std::string & nick, const std::string & target, 
 {
     std::string buf = ":" + nick + " PRIVMSG " + target + " :" + message + "\r\n";
     return (buf);
+}
+
+std::string MODE_ERR_REPLY(const std::string & server, const std::string & nick, const std::string & channel, const std::string & reason)
+{
+     std::string buf = RED ":" + server  + " " + nick + " " + channel + " :" + reason + END + "\r\n";
+    return (buf);   
 }

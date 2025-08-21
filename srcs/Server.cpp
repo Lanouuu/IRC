@@ -426,6 +426,7 @@ void    Server::bytesReceived(Client & client_temp, std::string & buf)
    size_t   pos;
 
    client_temp.getBufIN().append(buf);
+   std::cout << "BUF IN = " << client_temp.getBufIN() << std::endl;
    while ((pos = client_temp.getBufIN().find("\r\n")) != std::string::npos)
    {
         std::string req = client_temp.getBufIN().substr(0, pos);

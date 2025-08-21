@@ -73,7 +73,6 @@ class   Channel
         bool                                    _topicRestrictionIsSet;
         bool                                    _passwordIsSet;
         bool                                    _limitIsSet;
-        bool                                    _topic;
 };
 
 #endif

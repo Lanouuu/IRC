@@ -16,7 +16,6 @@ Channel &   Channel::operator=(const Channel & rhs)
     _members = rhs._members;
     _operators = rhs._operators;
     _password =  rhs._password;
-    _topic = rhs._topic;
     _limit = rhs._limit;
     _name = rhs._name;
     _inviteOnlyIsSet = rhs._inviteOnlyIsSet;

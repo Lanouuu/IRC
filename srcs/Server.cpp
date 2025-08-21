@@ -1413,7 +1413,7 @@ void Server::INVITE(Client &  client_temp, std::vector<std::string> & args) {
                 }
             }
             else
-                client_temp.getBufOUT() += ERR_INVITEONLYCHAN(_serverName, client_temp.getClientNickname(), channel);
+                client_temp.getBufOUT() += ERR_CHANOPRIVSNEEDED(_serverName, client_temp.getClientNickname(), channel);
         }
         else
         {

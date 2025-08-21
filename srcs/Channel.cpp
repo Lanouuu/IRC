@@ -15,7 +15,10 @@ Channel &   Channel::operator=(const Channel & rhs)
 {
     _members = rhs._members;
     _operators = rhs._operators;
+    _inviteList = rhs._inviteList;
+    _banList = rhs._banList;
     _password =  rhs._password;
+    _subject = rhs._subject;
     _limit = rhs._limit;
     _name = rhs._name;
     _inviteOnlyIsSet = rhs._inviteOnlyIsSet;
@@ -103,7 +106,6 @@ int    Channel::setOperator(Client & client, std::string const & mode, std::stri
     {
         if (_operators.size() == 1 && target == client.getClientNickname())
         {
-            //error
             client.getBufOUT() += MODE_ERR_REPLY(serverName, client.getClientNickname(), _name, "Cannot remove operator privileges (you're the last channel operator)");
             return 0;
         }
@@ -117,7 +119,6 @@ int    Channel::setOperator(Client & client, std::string const & mode, std::stri
             }
             else
             {
-                //error
                 client.getBufOUT() += MODE_ERR_REPLY(serverName, client.getClientNickname(), _name, "Cannot remove operator privileges, USER " + target + " is not an operator");
                 return 0;
             }

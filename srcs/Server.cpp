@@ -626,7 +626,7 @@ void    Server::NICK(Client &  client_temp, std::vector<std::string> & args)
     }
     for (client_map::iterator it = _clientsDB.begin(); it != _clientsDB.end(); it++)
     {
-        if (args[0] == it->second.getClientNickname())
+        if (args[0] == it->second.getClientNickname() || args[0] == "bot")
         {
             client_temp.getBufOUT() += ERR_NICKNAMEINUSE(_serverName, args[0], client_temp.getClientUsername());
             return ;
@@ -778,11 +778,11 @@ static void getChannelsAndPassword(std::vector<std::string> const & args,  std::
     while (1)
     {
         if (!std::getline(channelBuf, currentChannel, ','))
-        break;
+            break;
         if (std::getline(passwordBuf, currentPassword, ','))
-        channels.push_back(std::pair<std::string, std::string>(currentChannel, currentPassword));
+            channels.push_back(std::pair<std::string, std::string>(currentChannel, currentPassword));
         else
-        channels.push_back(std::pair<std::string, std::string>(currentChannel, ""));
+            channels.push_back(std::pair<std::string, std::string>(currentChannel, ""));
     }
     for (std::vector<std::pair<std::string, std::string> >::const_iterator it = channels.begin(); it != channels.end(); it++)
     {
@@ -815,7 +815,7 @@ static int parseJoinCommand(Server const & server, Client & client, std::string 
 void    Server::joinReply(Client & client, Channel const & channel)
 {
     std::string topic;
-    if (channel.topicIsSet())
+    if (!channel.getTopic().empty())
         topic = RPL_TOPIC(_serverName, client.getClientNickname(), channel.getName(), channel.getTopic());
     else
         topic = RPL_NOTOPIC(_serverName, client.getClientNickname(), channel.getName());
@@ -842,6 +842,8 @@ static void checkInviteList(Channel & channel, Client & client, std::string cons
         {
             if (password != channel.getPassword())
                 client.getBufOUT() += ERR_BADCHANNELKEY(serverName, client.getClientNickname(), channel.getName());
+            else
+                channel.getInviteList().erase(client.getClientNickname());
         }
     }
     else
@@ -1186,11 +1188,12 @@ bool    Server::execMode(Client & client_temp, Channel & channel, std::string & 
         {
             if (actualSign == "+")
             {
-                if (args.size() < j)
+                if (args.size() <= j)
                 {
                     client_temp.getBufOUT() += ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), "MODE");
                     return (false);
                 }
+                std::cout << "ARGS SIZE = " << args.size() << ", j = " << j << std::endl;
                 channel.setPassword(actualSign, args[j]);
                 channel.broadcast(MODE_REPLY(client_temp.getClientNickname(), channel.getName(), actualSign + 'k', args[j]));
                 j++;

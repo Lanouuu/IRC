@@ -946,7 +946,27 @@ void Server::TOPIC(Client &  client_temp, std::vector<std::string> & args) {
         {
             std::cout << "ici 728" << std::endl;
             //setting topic
-            if(it->second.isOperator(client_temp.getClientNickname()) == true)
+            if(it->second.topicIsSet() == true)
+            {
+                if(it->second.isOperator(client_temp.getClientNickname()) == true)
+                {
+                    std::ostringstream oss;
+                    for (size_t i = 1; i < args.size(); ++i) {
+                        if (i > 1) oss << " ";
+                        oss << args[i];
+                    }
+                    std::string subject = oss.str();
+                    it->second.setSubject(subject);
+                    it->second.broadcast(MY_RPL_TOPIC(_serverName, client_temp.getClientNickname(), client_temp.getClientUsername(), channel, it->second.getTopic()));
+                    return;
+                }
+                else
+                {
+                    client_temp.getBufOUT() += ERR_CHANOPRIVSNEEDED(_serverName, client_temp.getClientNickname(), channel);
+                    return;
+                }
+            }
+            else
             {
                 std::ostringstream oss;
                 for (size_t i = 1; i < args.size(); ++i) {
@@ -958,23 +978,31 @@ void Server::TOPIC(Client &  client_temp, std::vector<std::string> & args) {
                 it->second.broadcast(MY_RPL_TOPIC(_serverName, client_temp.getClientNickname(), client_temp.getClientUsername(), channel, it->second.getTopic()));
                 return;
             }
-            else
-            {
-                client_temp.getBufOUT() += ERR_CHANOPRIVSNEEDED(_serverName, client_temp.getClientNickname(), channel);
-                return;
-            }
         }
         if(args.size() > 1 && args[1] == ":")
         {
-            std::cout << "ici 733" << std::endl;
-            //unsetting topic
-            if(it->second.isOperator(client_temp.getClientNickname()) == true)
+            if(it->second.topicIsSet() == true)
+            {
+                std::cout << "ici 733" << std::endl;
+                //unsetting topic
+                if(it->second.isOperator(client_temp.getClientNickname()) == true)
+                {
+                    it->second.setSubject("");
+                    it->second.broadcast(MY_RPL_TOPIC(_serverName, client_temp.getClientNickname(), client_temp.getClientUsername(), channel, it->second.getTopic())); 
+                    return;
+                }
+                else
+                {
+                    client_temp.getBufOUT() += ERR_CHANOPRIVSNEEDED(_serverName, client_temp.getClientNickname(), channel);
+                    return ;
+                }
+            }
+            else
             {
                 it->second.setSubject("");
                 it->second.broadcast(MY_RPL_TOPIC(_serverName, client_temp.getClientNickname(), client_temp.getClientUsername(), channel, it->second.getTopic())); 
+                return;
             }
-            else
-                client_temp.getBufOUT() += ERR_CHANOPRIVSNEEDED(_serverName, client_temp.getClientNickname(), channel);
         }
     }
     else

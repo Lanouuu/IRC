@@ -56,9 +56,9 @@ void    Channel::setSubject(std::string const & subject)
 void    Channel::setIsTopic(std::string const & mode)
 {
     if (mode == "+")
-        _topic = true;
+        _topicRestrictionIsSet = true;
     else
-        _topic = false;
+        _topicRestrictionIsSet = false;
 }
 
 void    Channel::setLimit(std::string const & mode, size_t const & limit)

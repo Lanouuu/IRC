@@ -37,9 +37,7 @@ void    Bot::sendJoke(Client & client, std::string const & message, Server & ser
         buf = PRIVMSG_REPLY(_nick, client.getClientNickname(), joke);
     }
     else
-    {
         buf = PRIVMSG_REPLY(_nick, client.getClientNickname(), "Sorry i didn't understand what you said\r\n");
-    }
     if (send(client.getSocket(), buf.c_str(), buf.size(), 0) == -1)
     {
         std::cerr << RED "Error: send -> sendToUser(): " << client.getClientNickname() << END << std::endl;

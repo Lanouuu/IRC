@@ -104,10 +104,7 @@ Client &    Server::getClient(const std::string &nick)
     for (it = _clientsDB.begin(); it != _clientsDB.end(); it++)
     {
         if(it->second.getClientNickname() == nick)
-        {
-            std::cout << "ici 108" << std::endl;
             return it->second;
-        }
     }
     return it->second;
 }
@@ -614,7 +611,6 @@ static int checkNickFormat(std::string & nick)
 
 void    Server::NICK(Client &  client_temp, std::vector<std::string> & args)
 {
-    std::cout << "in nick" << std::endl;
     if (args.empty())
     {
         client_temp.getBufOUT() += ERR_NONICKNAMEGIVEN(_serverName, client_temp.getClientNickname(), client_temp.getClientUsername());
@@ -786,9 +782,7 @@ static void getChannelsAndPassword(std::vector<std::string> const & args,  std::
             channels.push_back(std::pair<std::string, std::string>(currentChannel, ""));
     }
     for (std::vector<std::pair<std::string, std::string> >::const_iterator it = channels.begin(); it != channels.end(); it++)
-    {
         std::cout << RED << "[Channel]-> " << it->first << " [Password]-> " << it->second << END << std::endl;
-    }
 }
 
 static int parseJoinCommand(Server const & server, Client & client, std::string const & arg)
@@ -800,13 +794,12 @@ static int parseJoinCommand(Server const & server, Client & client, std::string 
     }
     if (arg.size() == 1)
     {
-        client.getBufOUT() += ERR_BADCHANMASK(server.getServerName(), client.getClientNickname(), arg) + client.getClientNickname() + "!" + client.getClientUsername() + "@localhost " + "PART " + arg + " :bye" + "\r\n";
+        client.getBufOUT() += ERR_BADCHANMASK(server.getServerName(), client.getClientNickname(), arg) + client.getClientNickname();
         return 1;
     }
     if (ParseChannelName(arg) == 1)
     {
-        std::cout << RED << "ARG = " << arg << END << std::endl;
-        client.getBufOUT() += ERR_BADCHANMASK(server.getServerName(), client.getClientNickname(), arg) + client.getClientNickname() + "!" + client.getClientUsername() + "@localhost " + "PART " + arg + " :bye" + "\r\n";
+        client.getBufOUT() += ERR_BADCHANMASK(server.getServerName(), client.getClientNickname(), arg) + client.getClientNickname();
         return 1;
     }
     return 0;
@@ -906,10 +899,8 @@ void    Server::JOIN(Client & client_temp, std::vector<std::string> & args, std:
 
 
 void Server::TOPIC(Client &  client_temp, std::vector<std::string> & args) {
-    std::cout << BLUE "TOPIC COMMAND" END << std::endl;
     if(args.empty())
     {
-        std::cout << "ici 696" << std::endl;
         client_temp.getBufOUT() += ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), client_temp.getClientUsername());
         return;
     }
@@ -929,13 +920,11 @@ void Server::TOPIC(Client &  client_temp, std::vector<std::string> & args) {
         {
             if(!this->_channelDB.at(channel).getTopic().empty())
             {
-                std::cout << "ici 713" << std::endl;
                 client_temp.getBufOUT() += RPL_TOPIC(_serverName, client_temp.getClientNickname(), channel, this->_channelDB.at(channel).getTopic());
                 return;
             }
             else
             {
-                std::cout << "ici 721" << std::endl;
                 client_temp.getBufOUT() += RPL_NOTOPIC(_serverName, client_temp.getClientNickname(), channel);
                 return;
             }
@@ -947,8 +936,6 @@ void Server::TOPIC(Client &  client_temp, std::vector<std::string> & args) {
         }
         if(args.size() > 1 && !args[1].empty())
         {
-            std::cout << "ici 728" << std::endl;
-            //setting topic
             if(it->second.topicIsSet() == true)
             {
                 if(it->second.isOperator(client_temp.getClientNickname()) == true)
@@ -986,8 +973,6 @@ void Server::TOPIC(Client &  client_temp, std::vector<std::string> & args) {
         {
             if(it->second.topicIsSet() == true)
             {
-                std::cout << "ici 733" << std::endl;
-                //unsetting topic
                 if(it->second.isOperator(client_temp.getClientNickname()) == true)
                 {
                     it->second.setSubject("");
@@ -1009,10 +994,7 @@ void Server::TOPIC(Client &  client_temp, std::vector<std::string> & args) {
         }
     }
     else
-    {
-        std::cout << "ici 746" << std::endl;
         client_temp.getBufOUT() += ERR_NOSUCHCHANNEL(_serverName, client_temp.getClientNickname(), channel);
-    }
 }
 
 
@@ -1113,13 +1095,11 @@ bool Server::checkModeStr(Client & client_temp, std::string & modeString)
 {
     if (modeString.find_first_not_of("+-itkol") != std::string::npos)
     {
-        std::cout << "ici" << std::endl;
         client_temp.getBufOUT() += ERR_UNKNOWNMODE(_serverName, client_temp.getClientNickname(), modeString);
         return (false);
     }
     if (isalpha(modeString[0]) || !isalpha(modeString[modeString.size() - 1]))
     {
-        std::cout << "ici2" << std::endl;
         client_temp.getBufOUT() += ERR_UNKNOWNMODE(_serverName, client_temp.getClientNickname(), modeString);
         return (false);
     }
@@ -1222,7 +1202,6 @@ bool    Server::execMode(Client & client_temp, Channel & channel, std::string & 
                     client_temp.getBufOUT() += ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), "MODE");
                     return (false);
                 }
-                std::cout << "ARGS SIZE = " << args.size() << ", j = " << j << std::endl;
                 channel.setPassword(actualSign, args[j]);
                 channel.broadcast(MODE_REPLY(client_temp.getClientNickname(), channel.getName(), actualSign + 'k', args[j]));
                 j++;
@@ -1265,7 +1244,6 @@ void    Server::MODE(Client & client_temp, std::string & cmd, std::vector<std::s
 
 
 void Server::PART(Client &  client_temp, std::vector<std::string> & args) {
-    std::cout << BLUE "PART COMMAND" END << std::endl;
     if(args.empty())
     {
         client_temp.getBufOUT() += ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), client_temp.getClientUsername());
@@ -1353,7 +1331,6 @@ void Server::LIST(Client &  client_temp) {
     std::map<std::string, Channel>::const_iterator it = this->getChannelDB().begin();
     for(; it != this->getChannelDB().end(); it++)
     {
-        std::cout << "boucle list" << std::endl;
         std::stringstream ss2;
         ss2 << it->second.getMembers().size();
         std::string member_count = ss2.str();
@@ -1380,7 +1357,6 @@ bool Server::clientExist(std::string & nick) {
 }
 
 void Server::INVITE(Client &  client_temp, std::vector<std::string> & args) {
-    std::cout << BLUE "INVITE COMMAND" END << std::endl;
     if(args.empty() || args.size() != 2)
     {
         client_temp.getBufOUT() += ERR_NEEDMOREPARAMS(_serverName, client_temp.getClientNickname(), client_temp.getClientUsername());

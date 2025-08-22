@@ -36,11 +36,13 @@ void    Channel::setPassword(std::string const & mode, std::string const & passw
 {
     if (mode == "+")
     {
+        std::cout << "PASSWORD SET TO : " << password << std::endl;
         _password = password;
         _passwordIsSet = true;
     }
     else
     {
+        std::cout << "PASSWORD REMOVED : " << password << std::endl;
         _password = password;
         _passwordIsSet = false;
     }
@@ -67,12 +69,13 @@ void    Channel::setLimit(std::string const & mode, size_t const & limit)
 {
     if (mode == "+")
     {
-        std::cout << "CHANNEL SET LIMIT TO " << limit << std::endl;
+        std::cout << "CHANNEL LIMIT SET TO " << limit << std::endl;
         _limitIsSet = true;
         _limit = limit;
     }
     else
     {
+         std::cout << "CHANNEL LIMIT REMOVED" << limit << std::endl;
         _limitIsSet = false;
         _limit = limit;
     }
@@ -86,7 +89,10 @@ void    Channel::setInvitation(std::string const & mode)
         std::cout << "CHANNEL SET TO INVITE ONLY" << std::endl;
     }
     else if (mode == "-")
+    {
+        std::cout << "CHANNEL INVITE ONLY REMOVED" << std::endl;
         _inviteOnlyIsSet = false;
+    }
 }
 
 void    Channel::setName(std::string const & name)
@@ -274,7 +280,7 @@ void    Channel::eraseInvite(std::string const & name)
         _inviteList.erase(it);
     else
     {
-        std::cout << RED "Invite person to delet not found in _inviteList" END << std::endl;
+        std::cout << RED "Invite person to delete not found in _inviteList" END << std::endl;
         return ;
     }
 }
